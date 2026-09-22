@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Bubble Drawing — Engineering PDF annotations</title>
+  <meta name="description" content="Add numbered bubbles to engineering drawings. Review dimensions and export annotated PDFs and inspection lists, all in your browser.">
+  <link rel="icon" href="./icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="./"><span class="brand-icon">B<span>1</span></span><span>Bubble Drawing<small>ENGINEERING WORKSPACE</small></span></a>
+    <span class="privacy">Files stay on your device</span>
+    <button id="open" class="primary">Open PDF</button>
+    <input type="file" id="file" accept=".pdf,application/pdf" hidden>
+  </header>
+  <main>
+    <section class="workspace">
+      <div class="document-bar"><div><span class="eyebrow">DRAWING</span><h1 id="filename">Untitled workspace</h1></div><span id="filemeta" class="muted">PDF · up to 50 MB</span></div>
+      <div class="toolbar" aria-label="Drawing controls">
+        <div class="control-group"><button id="prev" data-needs-doc aria-label="Previous page" disabled>‹</button><label class="page-label">Page <input id="page" type="number" min="1" value="1" aria-label="Page number" data-needs-doc disabled> <span id="pages">/ —</span></label><button id="next" data-needs-doc aria-label="Next page" disabled>›</button></div>
+        <div class="control-group"><button id="zoomout" data-needs-doc aria-label="Zoom out" disabled>−</button><output id="zoom">100%</output><button id="zoomin" data-needs-doc aria-label="Zoom in" disabled>+</button><button id="fit" data-needs-doc disabled>Fit</button></div>
+        <div class="control-group tools"><button id="add" data-needs-doc aria-pressed="false" disabled>＋ Add bubble</button><button id="detect" data-needs-doc disabled>Suggest dimensions</button><button id="undo" disabled aria-label="Undo last annotation change">Undo</button></div>
+      </div>
+      <div id="viewer" class="viewer">
+        <div id="empty" class="empty">
+          <div class="sheet-symbol" aria-hidden="true"><span>01</span><div></div><i>02</i></div>
+          <p class="eyebrow">FROM DRAWING TO INSPECTION</p>
+          <h2>Every detail. Accounted for.</h2>
+          <p>Open a drawing, place your numbered bubbles,<br>and export a ready-to-review inspection list.</p>
+          <button id="choose" class="primary">Choose a PDF</button>
+          <button id="sample" class="text-button">Try a sample drawing</button>
+          <small>Or drop a PDF here. No account or upload required.</small>
+        </div>
+        <div id="paper" class="paper" hidden><canvas id="canvas" aria-label="PDF drawing"></canvas><div id="overlay" aria-label="Drawing annotations"></div></div>
+      </div>
+      <div class="statusbar"><span id="status" role="status" aria-live="polite">Ready to open a drawing</span><span id="mode">REVIEW MODE</span></div>
+    </section>
+    <aside>
+      <div class="panel-heading"><div><span class="eyebrow">INSPECTION</span><h2>Bubble register</h2></div><span class="count" id="count">0</span></div>
+      <p class="panel-hint">Select a bubble to edit its dimension and tolerance. Drag it on the drawing to reposition.</p>
+      <div id="register" class="register"><div class="register-empty">Your inspection points will appear here.</div></div>
+      <form id="editor" class="editor" hidden>
+        <div class="editor-heading"><strong id="selected-label">Bubble 1</strong><button id="delete" type="button" class="danger">Delete</button></div>
+        <label>Dimension / requirement<input id="dimension" maxlength="200" placeholder="e.g. Ø12.00 ±0.05"></label>
+        <div class="fields"><label>Nominal<input id="nominal" maxlength="80" placeholder="12.00"></label><label>Tolerance<input id="tolerance" maxlength="80" placeholder="Not specified"></label></div>
+        <label>Notes<textarea id="notes" maxlength="500" rows="2" placeholder="Inspection notes"></textarea></label>
+        <div class="editor-actions"><label class="check"><input id="reviewed" type="checkbox"> Reviewed</label><button id="moveup" type="button" aria-label="Move selected bubble earlier">↑</button><button id="movedown" type="button" aria-label="Move selected bubble later">↓</button></div>
+        <p class="small muted">Changes save to this session automatically.</p>
+      </form>
+      <div class="exports"><p id="review-summary">Add a bubble to begin.</p><button id="exportpdf" class="primary" data-needs-doc disabled>Download bubbled PDF</button><button id="exportcsv" disabled>Download inspection CSV</button><small>Review suggestions against the source drawing. Unspecified tolerances remain blank.</small></div>
+    </aside>
+  </main>
+  <footer>Bubble Drawing <span>Local processing · PDF & CSV export</span></footer>
+  <script type="module" src="./app.js"></script>
+  <noscript>This PDF editor requires JavaScript. Enable JavaScript in your browser to open a drawing.</noscript>
+</body>
+</html>
