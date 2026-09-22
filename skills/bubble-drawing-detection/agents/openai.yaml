@@ -1,0 +1,4 @@
+interface:
+  display_name: "Bubble Drawing Detection"
+  short_description: "Add and improve local engineering drawing recognition"
+  default_prompt: "Use this skill to improve OCR, dimension, tolerance, and GD&T detection in Bubble Drawing."

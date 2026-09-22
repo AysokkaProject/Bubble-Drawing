@@ -20,7 +20,7 @@
       <div class="toolbar" aria-label="Drawing controls">
         <div class="control-group"><button id="prev" data-needs-doc aria-label="Previous page" disabled>‹</button><label class="page-label">Page <input id="page" type="number" min="1" value="1" aria-label="Page number" data-needs-doc disabled> <span id="pages">/ —</span></label><button id="next" data-needs-doc aria-label="Next page" disabled>›</button></div>
         <div class="control-group"><button id="zoomout" data-needs-doc aria-label="Zoom out" disabled>−</button><output id="zoom">100%</output><button id="zoomin" data-needs-doc aria-label="Zoom in" disabled>+</button><button id="fit" data-needs-doc disabled>Fit</button></div>
-        <div class="control-group tools"><button id="add" data-needs-doc aria-pressed="false" disabled>＋ Add bubble</button><button id="detect" data-needs-doc disabled>Suggest dimensions</button><button id="undo" disabled aria-label="Undo last annotation change">Undo</button></div>
+        <div class="control-group tools"><button id="rotateleft" data-needs-doc disabled aria-label="Rotate page left">↶ 90°</button><button id="rotateright" data-needs-doc disabled aria-label="Rotate page right">↷ 90°</button><button id="add" data-needs-doc aria-pressed="false" disabled>＋ Add bubble</button><button id="detect" data-needs-doc disabled>Scan dimensions</button><button id="undo" disabled aria-label="Undo last annotation change">Undo</button></div>
       </div>
       <div id="viewer" class="viewer">
         <div id="empty" class="empty">
@@ -42,16 +42,24 @@
       <div id="register" class="register"><div class="register-empty">Your inspection points will appear here.</div></div>
       <form id="editor" class="editor" hidden>
         <div class="editor-heading"><strong id="selected-label">Bubble 1</strong><button id="delete" type="button" class="danger">Delete</button></div>
+        <div class="number-row"><label>Bubble number<input id="bubble-number" type="number" min="1" value="1"></label><button type="button" id="setnumber">Move to number</button></div>
         <label>Dimension / requirement<input id="dimension" maxlength="200" placeholder="e.g. Ø12.00 ±0.05"></label>
         <div class="fields"><label>Nominal<input id="nominal" maxlength="80" placeholder="12.00"></label><label>Tolerance<input id="tolerance" maxlength="80" placeholder="Not specified"></label></div>
+        <div class="fields"><label>Feature / GD&amp;T<input id="feature" maxlength="80" placeholder="e.g. Position"></label><label>Datums<input id="datums" maxlength="80" placeholder="e.g. A | B | C"></label></div>
         <label>Notes<textarea id="notes" maxlength="500" rows="2" placeholder="Inspection notes"></textarea></label>
         <div class="editor-actions"><label class="check"><input id="reviewed" type="checkbox"> Reviewed</label><button id="moveup" type="button" aria-label="Move selected bubble earlier">↑</button><button id="movedown" type="button" aria-label="Move selected bubble later">↓</button></div>
+        <p id="source-info" class="small muted"></p><button id="learn" type="button" class="text-button">Remember this correction</button>
         <p class="small muted">Changes save to this session automatically.</p>
       </form>
-      <div class="exports"><p id="review-summary">Add a bubble to begin.</p><button id="exportpdf" class="primary" data-needs-doc disabled>Download bubbled PDF</button><button id="exportcsv" disabled>Download inspection CSV</button><small>Review suggestions against the source drawing. Unspecified tolerances remain blank.</small></div>
+      <div class="exports"><p id="review-summary">Add a bubble to begin.</p><button id="exportpdf" class="primary" data-needs-doc disabled>Download bubbled PDF</button><div class="fields"><button id="exportimage" data-needs-doc disabled>Save image</button><button id="print" data-needs-doc disabled>Print</button></div><button id="exportcsv" disabled>Download inspection CSV</button><small>Review suggestions against the source drawing. Unspecified tolerances remain blank.</small><p id="learning-status" class="small">Learning: 0 confirmed corrections this session.</p></div>
     </aside>
   </main>
   <footer>Bubble Drawing <span>Local processing · PDF & CSV export</span></footer>
+  <dialog id="scan-dialog"><form method="dialog"><h2>Scan drawing</h2><p>Capture dimension, tolerance and GD&amp;T candidates. Check every suggestion against the original.</p><label>Pages<select id="scan-pages"><option value="all">All pages</option><option value="current">Current page</option></select></label><label class="check"><input id="scan-ocr" type="checkbox" checked> Include OCR for scanned content</label><p class="small muted">OCR runs on this device and may take time. Faint text, rotated labels and GD&amp;T symbols can be missed or misread.</p><div class="dialog-actions"><button value="cancel">Cancel</button><button id="start-scan" type="button" class="primary">Start scan</button></div></form></dialog>
+  <div id="scan-progress" class="progress-toast" hidden><span id="scan-message" role="status">Scanning…</span><progress id="scan-meter" max="100" value="0"></progress><button id="cancel-scan">Stop scan</button></div>
+  <dialog id="image-dialog"><form method="dialog"><h2>Save drawing as image</h2><label>Format<select id="image-format"><option value="png">PNG</option><option value="jpeg">JPEG</option></select></label><label>Pages<select id="image-pages"><option value="current">Current page</option><option value="all">All pages (ZIP file)</option></select></label><label>Resolution<select id="image-dpi"><option value="150">150 DPI</option><option value="300">300 DPI</option></select></label><p class="small muted">Includes bubbles and page rotation. Very large pages are capped at 25 megapixels.</p><div class="dialog-actions"><button value="cancel">Cancel</button><button id="save-image" type="button" class="primary">Download</button></div></form></dialog>
+  <dialog id="print-dialog"><form method="dialog"><h2>Print drawing</h2><label>Pages<select id="print-pages"><option value="all">All pages</option><option value="current">Current page</option></select></label><label>Drawing scale (%)<input id="print-scale" type="number" min="10" max="200" step="5" value="100"></label><p>Use the rotation buttons before printing. Scale changes the drawing size on its original paper size; above 100% may crop edges.</p><p class="small muted">In the printer dialog, select the matching paper size, 100% scale, and disable headers/footers.</p><div class="dialog-actions"><button value="cancel">Cancel</button><button id="prepare-print" type="button" class="primary">Open print preview</button></div></form></dialog>
+  <script src="./vendor/jszip.min.js"></script>
   <script type="module" src="./app.js"></script>
   <noscript>This PDF editor requires JavaScript. Enable JavaScript in your browser to open a drawing.</noscript>
 </body>

@@ -16,15 +16,16 @@ export function csvCell(value) {
 }
 
 export function makeCSV(bubbles) {
-  const rows = [['Bubble', 'Page', 'Dimension / requirement', 'Nominal', 'Tolerance', 'Notes', 'Reviewed'],
-    ...bubbles.map((b, i) => [i + 1, b.page, b.dimension, b.nominal, b.tolerance, b.notes, b.reviewed ? 'Yes' : 'No'])];
+  const rows = [['Bubble', 'Page', 'Dimension / requirement', 'Nominal', 'Tolerance', 'Feature', 'Datums', 'Notes', 'Reviewed', 'Source', 'OCR confidence'],
+    ...bubbles.map((b, i) => [i + 1, b.page, b.dimension, b.nominal, b.tolerance, b.feature, b.datums, b.notes, b.reviewed ? 'Yes' : 'No', b.source||'Manual', b.confidence??''])];
   return '\uFEFF' + rows.map(row => row.map(csvCell).join(',')).join('\r\n') + '\r\n';
 }
 
-export async function annotatePDF(bytes, bubbles) {
+export async function annotatePDF(bytes, bubbles, rotations = {}) {
   const doc = await PDFDocument.load(bytes);
   const font = await doc.embedFont(StandardFonts.HelveticaBold);
   const pages = doc.getPages();
+  pages.forEach((page,i)=>page.setRotation(degrees(((page.getRotation().angle+(rotations[i+1]||0))%360+360)%360)));
   for (let i = 0; i < bubbles.length; i++) {
     const b = bubbles[i], page = pages[b.page - 1];
     if (!page || !Number.isFinite(b.x) || !Number.isFinite(b.y)) throw new Error('Invalid bubble position.');
