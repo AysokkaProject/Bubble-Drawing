@@ -20,7 +20,7 @@
       <div class="toolbar" aria-label="Drawing controls">
         <div class="control-group"><button id="prev" data-needs-doc aria-label="Previous page" disabled>‹</button><label class="page-label">Page <input id="page" type="number" min="1" value="1" aria-label="Page number" data-needs-doc disabled> <span id="pages">/ —</span></label><button id="next" data-needs-doc aria-label="Next page" disabled>›</button></div>
         <div class="control-group"><button id="zoomout" data-needs-doc aria-label="Zoom out" disabled>−</button><output id="zoom">100%</output><button id="zoomin" data-needs-doc aria-label="Zoom in" disabled>+</button><button id="fit" data-needs-doc disabled>Fit</button></div>
-        <div class="control-group tools"><button id="rotateleft" data-needs-doc disabled aria-label="Rotate page left">↶ 90°</button><button id="rotateright" data-needs-doc disabled aria-label="Rotate page right">↷ 90°</button><button id="add" data-needs-doc aria-pressed="false" disabled>＋ Add bubble</button><button id="detect" data-needs-doc disabled>Scan dimensions</button><button id="undo" disabled aria-label="Undo last annotation change">Undo</button></div>
+        <div class="control-group tools"><button id="rotate" data-needs-doc disabled aria-label="Rotate page clockwise">↻ 90°</button><button id="add" data-needs-doc aria-pressed="false" disabled>＋ Add bubble</button><button id="add-msa" data-needs-doc aria-pressed="false" disabled>＋ MSA attribute</button><button id="detect" data-needs-doc disabled>Scan dimensions</button><button id="sort" data-needs-doc disabled>Sort by position</button><button id="save" data-needs-doc disabled>Save</button><button id="undo" disabled aria-label="Undo last annotation change">Undo</button></div>
       </div>
       <div id="viewer" class="viewer">
         <div id="empty" class="empty">
@@ -34,11 +34,10 @@
         </div>
         <div id="paper" class="paper" hidden><canvas id="canvas" aria-label="PDF drawing"></canvas><div id="overlay" aria-label="Drawing annotations"></div></div>
       </div>
-      <div class="statusbar"><span id="status" role="status" aria-live="polite">Ready to open a drawing</span><span id="mode">REVIEW MODE</span></div>
+      <div class="statusbar"><span id="status" role="status" aria-live="polite">Ready to open a drawing</span><span id="review-note">Review scan suggestions against the source drawing.</span><span id="mode">REVIEW MODE</span></div>
     </section>
     <aside>
       <div class="panel-heading"><div><span class="eyebrow">INSPECTION</span><h2>Bubble register</h2></div><span class="count" id="count">0</span></div>
-      <p class="panel-hint">Select a bubble to edit its dimension and tolerance. Drag it on the drawing to reposition.</p>
       <div id="register" class="register"><div class="register-empty">Your inspection points will appear here.</div></div>
       <form id="editor" class="editor" hidden>
         <div class="editor-heading"><strong id="selected-label">Bubble 1</strong><button id="delete" type="button" class="danger">Delete</button></div>
@@ -51,7 +50,7 @@
         <p id="source-info" class="small muted"></p><button id="learn" type="button" class="text-button">Remember this correction</button>
         <p class="small muted">Changes save to this session automatically.</p>
       </form>
-      <div class="exports"><p id="review-summary">Add a bubble to begin.</p><button id="exportpdf" class="primary" data-needs-doc disabled>Download bubbled PDF</button><div class="fields"><button id="exportimage" data-needs-doc disabled>Save image</button><button id="print" data-needs-doc disabled>Print</button></div><button id="exportcsv" disabled>Download inspection CSV</button><small>Review suggestions against the source drawing. Unspecified tolerances remain blank.</small><p id="learning-status" class="small">Learning: 0 confirmed corrections this session.</p></div>
+      <div class="exports"><p id="review-summary">Add a bubble to begin.</p><button id="exportpdf" class="primary" data-needs-doc disabled>Download bubbled PDF</button><div class="fields"><button id="exportimage" data-needs-doc disabled>Save image</button><button id="print" data-needs-doc disabled>Print</button></div><button id="exportcsv" disabled>Download inspection CSV</button><p id="learning-status" class="small">Learning: 0 confirmed corrections this session.</p><div class="saved-heading"><strong>Saved reviews</strong><button id="clear-saves" type="button">Clear</button></div><div id="saved-reviews" class="saved-reviews"><span class="muted small">No saved reviews yet.</span></div></div>
     </aside>
   </main>
   <footer>Bubble Drawing <span>Local processing · PDF & CSV export</span></footer>

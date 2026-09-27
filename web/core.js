@@ -21,20 +21,28 @@ export function makeCSV(bubbles) {
   return '\uFEFF' + rows.map(row => row.map(csvCell).join(',')).join('\r\n') + '\r\n';
 }
 
+function alphabetLabel(index) {
+  let n = index + 1, label = '';
+  while (n) { n--; label = String.fromCharCode(65 + n % 26) + label; n = Math.floor(n / 26); }
+  return label;
+}
+
 export async function annotatePDF(bytes, bubbles, rotations = {}) {
   const doc = await PDFDocument.load(bytes);
   const font = await doc.embedFont(StandardFonts.HelveticaBold);
   const pages = doc.getPages();
   pages.forEach((page,i)=>page.setRotation(degrees(((page.getRotation().angle+(rotations[i+1]||0))%360+360)%360)));
+  let normalIndex = 0, msaIndex = 0;
   for (let i = 0; i < bubbles.length; i++) {
     const b = bubbles[i], page = pages[b.page - 1];
     if (!page || !Number.isFinite(b.x) || !Number.isFinite(b.y)) throw new Error('Invalid bubble position.');
-    const label = String(i + 1), radius = Math.max(10, font.widthOfTextAtSize(label, 10) / 2 + 4);
+    const label = b.msa ? alphabetLabel(msaIndex++) : String(++normalIndex), radius = Math.max(10, font.widthOfTextAtSize(label, 10) / 2 + 4);
     const rotation = page.getRotation().angle;
-    page.drawCircle({ x: b.x, y: b.y, size: radius, color: rgb(1, .995, .94), borderColor: rgb(.78, .2, .14), borderWidth: 1.5, opacity: .96 });
+    const green = Boolean(b.msa);
+    page.drawCircle({ x: b.x, y: b.y, size: radius, color: green ? rgb(.91, .98, .93) : rgb(1, .995, .94), borderColor: green ? rgb(.13, .52, .29) : rgb(.78, .2, .14), borderWidth: 1.5, opacity: .96 });
     const angle = rotation * Math.PI / 180;
     const dx = -font.widthOfTextAtSize(label, 10) / 2, dy = -3.5;
-    page.drawText(label, { x: b.x + dx * Math.cos(angle) - dy * Math.sin(angle), y: b.y + dx * Math.sin(angle) + dy * Math.cos(angle), size: 10, font, color: rgb(.7, .15, .09), rotate: degrees(rotation) });
+    page.drawText(label, { x: b.x + dx * Math.cos(angle) - dy * Math.sin(angle), y: b.y + dx * Math.sin(angle) + dy * Math.cos(angle), size: 10, font, color: green ? rgb(.09, .4, .22) : rgb(.7, .15, .09), rotate: degrees(rotation) });
   }
   return doc.save();
 }

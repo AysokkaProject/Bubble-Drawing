@@ -4,7 +4,7 @@ import { extractRequirement, groupTextItems, ocrLines, moveBubble, correctionKey
 pdfjs.GlobalWorkerOptions.workerSrc = new URL('./vendor/pdf.worker.mjs', import.meta.url).href;
 const $ = id => document.getElementById(id);
 let pdf = null, original = null, filename = '', pageNumber = 1, viewport = null;
-let scale = 1, bubbles = [], selected = null, adding = false, history = [], busy = false;
+let scale = 1, bubbles = [], selected = null, adding = false, addingMsa = false, history = [], busy = false;
 let renderTask = null, renderVersion = 0, drag = null;
 let rotations = {}, corrections = {}, scanCancelled = false, ocrWorker = null;
 const status = (message, error = false) => { $('status').textContent = message; $('status').classList.toggle('error', error); };
@@ -20,6 +20,8 @@ function controls() {
   $('editor').inert = busy;
   $('register').inert = busy;
   $('overlay').inert = busy;
+  $('sort').disabled = !pdf || busy || bubbles.length < 2;
+  $('save').disabled = !pdf || busy || !bubbles.length;
 }
 async function run(action) {
   if(busy) return;
@@ -27,7 +29,7 @@ async function run(action) {
   try { await action(); } catch(e) { console.error(e); status(e.message || 'Something went wrong. Please try again.', true); }
   finally { busy = false; controls(); }
 }
-function setMode(value) { adding = value; $('add').setAttribute('aria-pressed', String(adding)); $('paper').classList.toggle('adding', adding); $('mode').textContent = adding ? 'PLACE BUBBLES' : 'REVIEW MODE'; }
+function setMode(value, msa = false) { adding = value; addingMsa = value && msa; $('add').setAttribute('aria-pressed', String(adding && !addingMsa)); $('add-msa').setAttribute('aria-pressed', String(addingMsa)); $('paper').classList.toggle('adding', adding); $('mode').textContent = addingMsa ? 'PLACE MSA ATTRIBUTES' : adding ? 'PLACE BUBBLES' : 'REVIEW MODE'; }
 function clampPoint(x, y) { const margin = 12 * scale; return [Math.max(Math.min(margin,viewport.width/2),Math.min(viewport.width-margin,x)),Math.max(Math.min(margin,viewport.height/2),Math.min(viewport.height-margin,y))]; }
 async function render(fit = false) {
   if(!pdf) return;
@@ -75,15 +77,16 @@ function drawBubbles() {
   bubbles.forEach((b,i) => {
     if(b.page !== pageNumber) return;
     const [x,y] = viewport.convertToViewportPoint(b.x,b.y);
-    const button = document.createElement('button'); button.className = 'bubble' + (b.id === selected ? ' selected' : '');
-    button.textContent = i+1; button.dataset.id = b.id; button.title = `Bubble ${i+1}: ${b.dimension || 'No dimension entered'}`;
+    const button = document.createElement('button'); button.className = `bubble${b.msa ? ' msa' : ''}` + (b.id === selected ? ' selected' : '');
+    const label = b.msa ? msaLabel(b) : normalLabel(b);
+    button.textContent = label; button.dataset.id = b.id; button.title = `${b.msa ? 'MSA attribute' : 'Bubble'} ${label}: ${b.dimension || 'No dimension entered'}`;
     button.setAttribute('aria-label', button.title); button.style.left = `${x}px`; button.style.top = `${y}px`;
     const radius = Math.max(10, String(i+1).length * 3 + 4);
     button.style.width = button.style.height = `${radius*2*scale}px`; button.style.fontSize = `${10*scale}px`;
     button.style.borderWidth = `${1.5*scale}px`;
     button.addEventListener('pointerdown',e => {
       if(busy || e.button !== 0) return;
-      e.preventDefault(); e.stopPropagation(); selected = b.id; setMode(false);
+      e.preventDefault(); e.stopPropagation(); selected = b.id; if(!adding) setMode(false);
       // Keep the pointer-capturing button mounted during a drag.
       document.querySelectorAll('.bubble').forEach(el=>el.classList.toggle('selected',el===button));
       refresh(false); button.setPointerCapture(e.pointerId);
@@ -119,22 +122,47 @@ function refresh(paint = true, editor = true) {
   if(!bubbles.length) {const empty=document.createElement('div');empty.className='register-empty';empty.textContent='Your inspection points will appear here.';$('register').append(empty);}
   bubbles.forEach((b,i)=>{
     const row=document.createElement('button');row.className='register-item';row.setAttribute('aria-current',String(b.id===selected));
-    const num=document.createElement('span');num.className='register-number';num.textContent=i+1;
+    const num=document.createElement('span');num.className=`register-number${b.msa?' msa':''}`;num.textContent=b.msa?msaLabel(b):normalLabel(b);
     const text=document.createElement('span');text.className='register-text';
     const title=document.createElement('strong');title.textContent=b.dimension||'Untitled requirement';
     const meta=document.createElement('small');meta.textContent=`Page ${b.page} · ${b.reviewed?'Reviewed':'Needs review'}`;
     text.append(title,meta);row.append(num,text);
     if(b.reviewed){const check=document.createElement('span');check.className='review-check';check.textContent='✓';row.append(check);}
-    row.onclick=()=>run(async()=>{selected=b.id;setMode(false);if(pageNumber!==b.page){pageNumber=b.page;await render();}refresh();});
+    row.onclick=()=>run(async()=>{selected=b.id;if(!adding)setMode(false);if(pageNumber!==b.page){pageNumber=b.page;await render();}refresh();});
     $('register').append(row);
   });
   const b=current();$('editor').hidden=!b;
-  if(b&&editor){$('selected-label').textContent=`Bubble ${bubbles.indexOf(b)+1}`;for(const key of ['dimension','nominal','tolerance','feature','datums','notes']) $(key).value=b[key]||'';$('reviewed').checked=b.reviewed;$('moveup').disabled=bubbles.indexOf(b)===0;$('movedown').disabled=bubbles.indexOf(b)===bubbles.length-1;
+  if(b&&editor){$('selected-label').textContent=`${b.msa?'MSA attribute':'Bubble'} ${b.msa?msaLabel(b):normalLabel(b)}`;for(const key of ['dimension','nominal','tolerance','feature','datums','notes']) $(key).value=b[key]||'';$('reviewed').checked=b.reviewed;$('moveup').disabled=bubbles.indexOf(b)===0;$('movedown').disabled=bubbles.indexOf(b)===bubbles.length-1;
     $('bubble-number').value=bubbles.indexOf(b)+1;$('bubble-number').max=bubbles.length;
     $('source-info').textContent=b.source?`${b.source}${b.confidence!==undefined?' · OCR confidence '+Math.round(b.confidence)+'%':''}${b.learned?' · Remembered correction':''} · Original: ${b.rawText||''}`:'Manually placed bubble';
     $('learn').disabled=!b.rawText||!b.reviewed;
   }
   if(paint) drawBubbles();controls();
+}
+function normalLabel(b){return String(bubbles.filter(item=>!item.msa).indexOf(b)+1);}
+function msaLabel(b){let n=bubbles.filter(item=>item.msa).indexOf(b)+1,label='';while(n){n--;label=String.fromCharCode(65+n%26)+label;n=Math.floor(n/26);}return label;}
+function sortByPosition(){
+  checkpoint();
+  bubbles.sort((a,b)=>a.page-b.page || (b.y-a.y) || (a.x-b.x));
+  refresh();
+  status('Bubbles sorted from top to bottom, then left to right on the drawing.');
+}
+function savedReviews(){try{return JSON.parse(localStorage.getItem('bubble-drawing:saves')||'[]')}catch{return[]}}
+function refreshSavedViews(){
+  const host=$('saved-reviews'); host.replaceChildren(); const saves=savedReviews();
+  if(!saves.length){const empty=document.createElement('span');empty.className='muted small';empty.textContent='No saved reviews yet.';host.append(empty);return;}
+  for(const save of saves){const row=document.createElement('div');row.className='saved-review';const text=document.createElement('span');text.innerHTML=`<strong>${escapeHTML(save.filename)}</strong><small>${new Date(save.savedAt).toLocaleString()} · ${save.bubbles.length} bubbles</small>`;const view=document.createElement('button');view.type='button';view.textContent='View';view.onclick=()=>restoreSave(save.id);row.append(text,view);host.append(row);}
+}
+function escapeHTML(value){return String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function saveReview(){
+  const saves=savedReviews().filter(item=>item.filename!==filename||item.savedAt!==saveReview.lastSavedAt);
+  const snapshot={id:crypto.randomUUID(),filename,savedAt:new Date().toISOString(),bubbles:structuredClone(bubbles),rotations:structuredClone(rotations)};
+  localStorage.setItem('bubble-drawing:saves',JSON.stringify([snapshot,...saves].slice(0,20)));saveReview.lastSavedAt=snapshot.savedAt;refreshSavedViews();status(`Saved ${bubbles.length} bubbles for ${filename}.`);
+}
+async function restoreSave(id){
+  const snapshot=savedReviews().find(item=>item.id===id);if(!snapshot)return;
+  if(snapshot.filename!==filename){status(`Open ${snapshot.filename} to view this saved review.`,true);return;}
+  checkpoint();bubbles=structuredClone(snapshot.bubbles);rotations=structuredClone(snapshot.rotations);selected=null;await render();refresh();status(`Showing saved review from ${new Date(snapshot.savedAt).toLocaleString()}.`);
 }
 async function suggest() {
   const pages=$('scan-pages').value==='all'?Array.from({length:pdf.numPages},(_,i)=>i+1):[pageNumber];
@@ -217,16 +245,16 @@ $('page').onchange=()=>run(async()=>{pageNumber=Math.max(1,Math.min(pdf.numPages
 $('zoomin').onclick=()=>run(async()=>{scale=Math.min(3,scale*1.2);await render();});
 $('zoomout').onclick=()=>run(async()=>{scale=Math.max(.15,scale/1.2);await render();});
 $('fit').onclick=()=>run(()=>render(true));
-$('add').onclick=()=>{setMode(!adding);status(adding?'Click on the drawing to add a bubble. Press Escape to finish.':'Select a bubble to edit it.');};
+$('add').onclick=()=>{setMode(!(adding&&!addingMsa));status(adding?'Click on the drawing to add a bubble. You can still move existing bubbles. Press Escape to finish.':'Select a bubble to edit it.');};
+$('add-msa').onclick=()=>{setMode(!(adding&&addingMsa),true);status(addingMsa?'Click on the drawing to add a green MSA attribute. Press Escape to finish.':'Select a bubble to edit it.');};
 $('detect').onclick=()=>$('scan-dialog').showModal();
 $('start-scan').onclick=()=>{$('scan-dialog').close();run(suggest);};
 $('cancel-scan').onclick=()=>{scanCancelled=true;$('cancel-scan').disabled=true;$('scan-message').textContent='Stopping after the current operation…';};
-$('rotateleft').onclick=()=>run(async()=>{checkpoint();rotations[pageNumber]=((rotations[pageNumber]||0)+270)%360;await render(true);});
-$('rotateright').onclick=()=>run(async()=>{checkpoint();rotations[pageNumber]=((rotations[pageNumber]||0)+90)%360;await render(true);});
+$('rotate').onclick=()=>run(async()=>{checkpoint();rotations[pageNumber]=((rotations[pageNumber]||0)+90)%360;await render(true);});
 $('overlay').onclick=e=>{
   if(!adding||busy||e.target.closest('.bubble'))return;
   const rect=$('paper').getBoundingClientRect();const [vx,vy]=clampPoint(e.clientX-rect.left,e.clientY-rect.top);const [x,y]=viewport.convertToPdfPoint(vx,vy);
-  checkpoint();const b=createBubble(x,y);bubbles.push(b);selected=b.id;refresh();status(`Bubble ${bubbles.length} added. Enter its requirement in the register.`);
+  checkpoint();const b=createBubble(x,y,{msa:addingMsa});bubbles.push(b);selected=b.id;refresh();status(`${addingMsa?'MSA attribute '+msaLabel(b):'Bubble '+normalLabel(b)} added. Enter its requirement in the register.`);
 };
 $('editor').onsubmit=e=>e.preventDefault();
 for(const key of ['dimension','nominal','tolerance','feature','datums','notes']){
@@ -239,6 +267,9 @@ function reorder(delta){const i=bubbles.findIndex(b=>b.id===selected),j=i+delta;
 $('moveup').onclick=()=>reorder(-1);$('movedown').onclick=()=>reorder(1);
 $('undo').onclick=()=>run(async()=>{if(!history.length)return;const previous=JSON.parse(history.pop());bubbles=previous.bubbles;rotations=previous.rotations;if(!current())selected=null;await render();refresh();status('Last annotation change undone.');});
 $('setnumber').onclick=()=>run(()=>{const result=moveBubble(bubbles,selected,Number($('bubble-number').value));checkpoint();bubbles=result;refresh();status('Bubble numbers updated across the drawing and inspection list.');});
+$('sort').onclick=()=>run(()=>sortByPosition());
+$('save').onclick=()=>run(()=>saveReview());
+$('clear-saves').onclick=()=>{if(!savedReviews().length)return;localStorage.removeItem('bubble-drawing:saves');refreshSavedViews();status('Saved review history cleared.');};
 $('exportpdf').onclick=()=>run(async()=>{status('Preparing annotated PDF…');download(await annotatePDF(original,bubbles,rotations),'application/pdf',`${base()}-bubbled.pdf`);status('Bubbled PDF downloaded with your page rotations.');});
 $('exportimage').onclick=()=>$('image-dialog').showModal();
 $('save-image').onclick=()=>{$('image-dialog').close();run(saveImages);};
@@ -247,6 +278,7 @@ $('prepare-print').onclick=()=>{const percentage=Number($('print-scale').value);
 $('learn').onclick=()=>{const b=current();if(!b?.reviewed||!b.rawText)return;corrections[correctionKey(b.rawText)]=Object.fromEntries(['dimension','nominal','tolerance','feature','datums','notes'].map(key=>[key,b[key]||'']));$('learning-status').textContent=`Learning: ${Object.keys(corrections).length} confirmed corrections this session.`;status('Correction remembered for matching text in future scans this session.');};
 $('exportcsv').onclick=()=>{download(makeCSV(bubbles),'text/csv;charset=utf-8',`${base()}-inspection.csv`);status('Inspection CSV downloaded.');};
 document.addEventListener('keydown',e=>{if(e.key==='Escape')setMode(false);});
+refreshSavedViews();
 window.addEventListener('beforeunload',e=>{if(bubbles.length){e.preventDefault();e.returnValue='';}});
 $('viewer').addEventListener('dragover',e=>{e.preventDefault();$('viewer').classList.add('dragover');});
 $('viewer').addEventListener('dragleave',()=>$('viewer').classList.remove('dragover'));
