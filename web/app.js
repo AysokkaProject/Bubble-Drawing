@@ -137,7 +137,7 @@ function refresh(paint = true, editor = true) {
     $('source-info').textContent=b.source?`${b.source}${b.confidence!==undefined?' · OCR confidence '+Math.round(b.confidence)+'%':''}${b.learned?' · Remembered correction':''} · Original: ${b.rawText||''}`:'Manually placed bubble';
     $('learn').disabled=!b.rawText||!b.reviewed;
   }
-  if(paint) drawBubbles();controls();
+  if(paint) drawBubbles();controls();refreshRoadmap();
 }
 function normalLabel(b){return String(bubbles.filter(item=>!item.msa).indexOf(b)+1);}
 function msaLabel(b){let n=bubbles.filter(item=>item.msa).indexOf(b)+1,label='';while(n){n--;label=String.fromCharCode(65+n%26)+label;n=Math.floor(n/26);}return label;}
@@ -152,6 +152,27 @@ function refreshSavedViews(){
   const host=$('saved-reviews'); host.replaceChildren(); const saves=savedReviews();
   if(!saves.length){const empty=document.createElement('span');empty.className='muted small';empty.textContent='No saved reviews yet.';host.append(empty);return;}
   for(const save of saves){const row=document.createElement('div');row.className='saved-review';const text=document.createElement('span');text.innerHTML=`<strong>${escapeHTML(save.filename)}</strong><small>${new Date(save.savedAt).toLocaleString()} · ${save.bubbles.length} bubbles</small>`;const view=document.createElement('button');view.type='button';view.textContent='View';view.onclick=()=>restoreSave(save.id);row.append(text,view);host.append(row);}
+}
+const roadmapSteps = [
+  ['open', 'Open a drawing', 'Load a PDF or try the sample drawing.'],
+  ['capture', 'Capture requirements', 'Add bubbles manually or run Scan dimensions.'],
+  ['classify', 'Classify MSA points', 'Use green MSA attributes for special characteristics.'],
+  ['review', 'Review every point', 'Fill the requirement and mark checked bubbles as Reviewed.'],
+  ['deliver', 'Deliver the record', 'Sort by drawing position, Save, then export PDF or CSV.']
+];
+function roadmapState(){try{return JSON.parse(localStorage.getItem('bubble-drawing:roadmap')||'{}')}catch{return{}}}
+function refreshRoadmap(){
+  const saved=roadmapState();
+  const automatic={open:Boolean(pdf),capture:Boolean(bubbles.length),classify:Boolean(bubbles.some(b=>b.msa)),review:Boolean(bubbles.some(b=>b.reviewed)),deliver:Boolean(saved.deliver)};
+  const complete=roadmapSteps.filter(([key])=>automatic[key]||saved[key]).length;
+  $('roadmap-progress').textContent=`${complete}/${roadmapSteps.length}`;
+  $('roadmap-steps').replaceChildren();
+  for(const [key,title,description] of roadmapSteps){
+    const done=automatic[key]||saved[key], row=document.createElement('button');row.type='button';row.className=`roadmap-step${done?' complete':''}`;row.setAttribute('aria-pressed',String(done));
+    row.innerHTML=`<span class="roadmap-check">${done?'✓':roadmapSteps.findIndex(item=>item[0]===key)+1}</span><span><strong>${title}</strong><small>${description}</small></span>`;
+    row.onclick=()=>{if(automatic[key])return;const next=roadmapState();next[key]=!done;localStorage.setItem('bubble-drawing:roadmap',JSON.stringify(next));refreshRoadmap();};
+    $('roadmap-steps').append(row);
+  }
 }
 function escapeHTML(value){return String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function saveReview(){
@@ -279,6 +300,7 @@ $('learn').onclick=()=>{const b=current();if(!b?.reviewed||!b.rawText)return;cor
 $('exportcsv').onclick=()=>{download(makeCSV(bubbles),'text/csv;charset=utf-8',`${base()}-inspection.csv`);status('Inspection CSV downloaded.');};
 document.addEventListener('keydown',e=>{if(e.key==='Escape')setMode(false);});
 refreshSavedViews();
+refreshRoadmap();
 window.addEventListener('beforeunload',e=>{if(bubbles.length){e.preventDefault();e.returnValue='';}});
 $('viewer').addEventListener('dragover',e=>{e.preventDefault();$('viewer').classList.add('dragover');});
 $('viewer').addEventListener('dragleave',()=>$('viewer').classList.remove('dragover'));
