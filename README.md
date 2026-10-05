@@ -10,12 +10,21 @@ A browser-based engineering PDF annotation workspace, converted from the origina
 4. **Scan dimensions** scans the current page or the full document. It combines embedded PDF text with optional on-device English OCR and records the source and OCR confidence. Suggestions are not engineering verification and can miss faint or rotated text and complex feature-control frames.
 5. Enter a bubble number directly or use the up/down controls to reorder it. Numbers remain sequential across all pages.
 6. Rotate individual pages, zoom the workspace, and print at 10–200% drawing scale. Rotation is carried into exports.
-7. Download the annotated PDF, inspection CSV, PNG/JPEG page, or a ZIP of all pages. Edits exist only in the current browser session; there is no server storage.
+7. Download the annotated PDF, inspection CSV, PNG/JPEG page, or a ZIP of all pages. Use **Save current** to keep the PDF and annotations in your private Supabase account.
 8. A reviewed OCR/PDF-text result can be remembered as a correction for identical captured text later in the same session.
 
 ## Privacy and exports
 
-All PDF parsing, OCR, annotation and export run locally in the browser. Libraries, fonts, OCR engine and English model are self-hosted. Drawings and corrections are not uploaded to a backend. Password-protected PDFs need an unlocked copy. PDF export preserves original pages, page sizes and crop boxes and applies chosen rotation; modifying a signed PDF may invalidate its signature. Tolerances are never inferred from decimal places. CSV text is escaped to protect against spreadsheet formula injection.
+PDF parsing, OCR, annotation and export run locally in the browser. Libraries, fonts, OCR engine and English model are self-hosted. A PDF is uploaded only when you explicitly choose **Save current** while signed in; cloud copies use a private Supabase Storage bucket and per-user access policies. Password-protected PDFs need an unlocked copy. PDF export preserves original pages, page sizes and crop boxes and applies chosen rotation; modifying a signed PDF may invalidate its signature. Tolerances are never inferred from decimal places. CSV text is escaped to protect against spreadsheet formula injection.
+
+## Supabase cloud saves
+
+1. Create a Supabase project and run `supabase/migrations/20261005000000_saved_drawings.sql` in its SQL Editor. This creates the private PDF bucket, saved-drawing table and row-level security policies that limit each user to their own records and files.
+2. Copy the Project URL and **publishable key** from Supabase Project Settings → API Keys into `web/supabase-config.js`. Never put a `service_role` or secret key in browser code.
+3. In Supabase Auth → URL Configuration, allow the deployed site URL as a redirect. Deploy the site. Users can create an account or sign in with email and password. Email confirmation behavior is controlled by the Supabase Auth settings.
+4. Choose **Save current** to upload the PDF and its bubble data. Select a saved cloud drawing to download and reopen it. Cloud PDFs are limited to 50 MB, matching the app’s open-file limit.
+
+The Project URL and publishable key are public client configuration; the database and Storage RLS policies provide the access boundary. The Supabase JS client is vendored at `web/vendor/supabase/` under its MIT license.
 
 ## Build and deploy
 
@@ -28,7 +37,7 @@ node --test tests/*.test.mjs
 
 Serve `web/` with any local HTTP server for development. Do not open index.html as a file URL: module imports and the PDF worker require HTTP.
 
-Import this GitHub repository into Vercel. The committed `vercel.json` sets the build command and `dist` output directory. No environment variables, paid services or API keys are required.
+Import this GitHub repository into Vercel. The committed `vercel.json` sets the build command and `dist` output directory. Configure the Supabase public client settings in `web/supabase-config.js` before deploying cloud-save support.
 
 ## Libraries
 

@@ -1,7 +1,5 @@
-# file: ~/.gitignore_global
-.DS_Store
-.idea
-
+# Local build and credential files
 dist/
 node_modules/
 .vercel/
+.env*

@@ -1,12 +1,17 @@
 import * as pdfjs from './vendor/pdf.mjs';
 import { parseDimension, makeCSV, annotatePDF, makeSample } from './core.js';
 import { extractRequirement, groupTextItems, ocrLines, moveBubble, correctionKey } from './detection.js';
+import { SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY } from './supabase-config.js';
 pdfjs.GlobalWorkerOptions.workerSrc = new URL('./vendor/pdf.worker.mjs', import.meta.url).href;
 const $ = id => document.getElementById(id);
 let pdf = null, original = null, filename = '', pageNumber = 1, viewport = null;
 let scale = 1, bubbles = [], selected = null, adding = false, addingMsa = false, history = [], busy = false;
 let renderTask = null, renderVersion = 0, drag = null;
 let rotations = {}, corrections = {}, scanCancelled = false, ocrWorker = null;
+let supabaseClient = null, cloudUser = null;
+if (SUPABASE_URL && SUPABASE_PUBLISHABLE_KEY && window.supabase?.createClient) {
+  supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+}
 const status = (message, error = false) => { $('status').textContent = message; $('status').classList.toggle('error', error); };
 const current = () => bubbles.find(b => b.id === selected);
 function checkpoint() { history.push(JSON.stringify({bubbles,rotations})); if(history.length > 60) history.shift(); $('undo').disabled = false; }
@@ -22,6 +27,7 @@ function controls() {
   $('overlay').inert = busy;
   $('sort').disabled = !pdf || busy || bubbles.length < 2;
   $('save').disabled = !pdf || busy || !bubbles.length;
+  $('save-cloud').disabled = !pdf || busy || !cloudUser;
 }
 async function run(action) {
   if(busy) return;
@@ -50,8 +56,8 @@ async function render(fit = false) {
   try { await renderTask.promise; } catch(e) { if(e.name !== 'RenderingCancelledException') throw e; }
   if(version === renderVersion) { renderTask = null; drawBubbles(); controls(); }
 }
-async function loadPDF(bytes, name) {
-  if(original && bubbles.length && !confirm('Open a different drawing? Download your current PDF and CSV first if you want to keep this work.')) return;
+async function loadPDF(bytes, name, skipConfirm = false) {
+  if(!skipConfirm && original && bubbles.length && !confirm('Open a different drawing? Download your current PDF and CSV first if you want to keep this work.')) return false;
   status('Opening drawing…');
   const candidate = await pdfjs.getDocument({ data: bytes.slice(), cMapUrl: new URL('./vendor/cmaps/', import.meta.url).href, cMapPacked: true, standardFontDataUrl: new URL('./vendor/standard_fonts/', import.meta.url).href, wasmUrl: new URL('./vendor/wasm/', import.meta.url).href, isEvalSupported: false }).promise.catch(e => {throw new Error(e.name === 'PasswordException' ? 'This PDF is password protected. Open an unlocked copy.' : 'This PDF could not be opened. Try another PDF file.');});
   if(candidate.numPages > 300) {await candidate.destroy();throw new Error('Please use a PDF with 300 pages or fewer.');}
@@ -61,6 +67,7 @@ async function loadPDF(bytes, name) {
   $('filename').textContent = name; $('filemeta').textContent = `${pdf.numPages} page${pdf.numPages===1?'':'s'} · ${(bytes.length/1024/1024).toFixed(1)} MB`;
   $('empty').hidden = true; $('paper').hidden = false; setMode(false); refresh();
   await render(true); status('Drawing ready. Add bubbles manually or scan dimensions across the drawing.');
+  return true;
 }
 async function openFile(file) {
   if(!file) return;
@@ -90,14 +97,15 @@ function drawBubbles() {
       // Keep the pointer-capturing button mounted during a drag.
       document.querySelectorAll('.bubble').forEach(el=>el.classList.toggle('selected',el===button));
       refresh(false); button.setPointerCapture(e.pointerId);
-      drag = {id:b.id,startX:e.clientX,startY:e.clientY,x:b.x,y:b.y,moved:false};
+      const bounds = button.getBoundingClientRect();
+      drag = {id:b.id,startX:e.clientX,startY:e.clientY,offsetX:e.clientX-(bounds.left+bounds.width/2),offsetY:e.clientY-(bounds.top+bounds.height/2),x:b.x,y:b.y,moved:false};
     });
     button.addEventListener('pointermove',e => {
       if(!drag || drag.id!==b.id) return;
       if(!drag.moved && Math.hypot(e.clientX-drag.startX,e.clientY-drag.startY)<3) return;
       if(!drag.moved) checkpoint(); drag.moved=true;
       const rect = $('paper').getBoundingClientRect();
-      const [vx,vy] = clampPoint(e.clientX-rect.left,e.clientY-rect.top);
+      const [vx,vy] = clampPoint(e.clientX-rect.left-drag.offsetX,e.clientY-rect.top-drag.offsetY);
       [b.x,b.y] = viewport.convertToPdfPoint(vx,vy);
       button.style.left = `${vx}px`;button.style.top = `${vy}px`;
     });
@@ -137,7 +145,7 @@ function refresh(paint = true, editor = true) {
     $('source-info').textContent=b.source?`${b.source}${b.confidence!==undefined?' · OCR confidence '+Math.round(b.confidence)+'%':''}${b.learned?' · Remembered correction':''} · Original: ${b.rawText||''}`:'Manually placed bubble';
     $('learn').disabled=!b.rawText||!b.reviewed;
   }
-  if(paint) drawBubbles();controls();refreshRoadmap();
+  if(paint) drawBubbles();controls();
 }
 function normalLabel(b){return String(bubbles.filter(item=>!item.msa).indexOf(b)+1);}
 function msaLabel(b){let n=bubbles.filter(item=>item.msa).indexOf(b)+1,label='';while(n){n--;label=String.fromCharCode(65+n%26)+label;n=Math.floor(n/26);}return label;}
@@ -153,26 +161,74 @@ function refreshSavedViews(){
   if(!saves.length){const empty=document.createElement('span');empty.className='muted small';empty.textContent='No saved reviews yet.';host.append(empty);return;}
   for(const save of saves){const row=document.createElement('div');row.className='saved-review';const text=document.createElement('span');text.innerHTML=`<strong>${escapeHTML(save.filename)}</strong><small>${new Date(save.savedAt).toLocaleString()} · ${save.bubbles.length} bubbles</small>`;const view=document.createElement('button');view.type='button';view.textContent='View';view.onclick=()=>restoreSave(save.id);row.append(text,view);host.append(row);}
 }
-const roadmapSteps = [
-  ['open', 'Open a drawing', 'Load a PDF or try the sample drawing.'],
-  ['capture', 'Capture requirements', 'Add bubbles manually or run Scan dimensions.'],
-  ['classify', 'Classify MSA points', 'Use green MSA attributes for special characteristics.'],
-  ['review', 'Review every point', 'Fill the requirement and mark checked bubbles as Reviewed.'],
-  ['deliver', 'Deliver the record', 'Sort by drawing position, Save, then export PDF or CSV.']
-];
-function roadmapState(){try{return JSON.parse(localStorage.getItem('bubble-drawing:roadmap')||'{}')}catch{return{}}}
-function refreshRoadmap(){
-  const saved=roadmapState();
-  const automatic={open:Boolean(pdf),capture:Boolean(bubbles.length),classify:Boolean(bubbles.some(b=>b.msa)),review:Boolean(bubbles.some(b=>b.reviewed)),deliver:Boolean(saved.deliver)};
-  const complete=roadmapSteps.filter(([key])=>automatic[key]||saved[key]).length;
-  $('roadmap-progress').textContent=`${complete}/${roadmapSteps.length}`;
-  $('roadmap-steps').replaceChildren();
-  for(const [key,title,description] of roadmapSteps){
-    const done=automatic[key]||saved[key], row=document.createElement('button');row.type='button';row.className=`roadmap-step${done?' complete':''}`;row.setAttribute('aria-pressed',String(done));
-    row.innerHTML=`<span class="roadmap-check">${done?'✓':roadmapSteps.findIndex(item=>item[0]===key)+1}</span><span><strong>${title}</strong><small>${description}</small></span>`;
-    row.onclick=()=>{if(automatic[key])return;const next=roadmapState();next[key]=!done;localStorage.setItem('bubble-drawing:roadmap',JSON.stringify(next));refreshRoadmap();};
-    $('roadmap-steps').append(row);
+function refreshCloudDrawings(rows=[]){
+  const host=$('cloud-drawings');host.replaceChildren();
+  if(!supabaseClient){$('cloud-hint').textContent='Cloud storage is not configured yet.';return;}
+  if(!cloudUser){$('cloud-hint').textContent='Sign in to save PDFs and bubbles to your account.';host.append(Object.assign(document.createElement('span'),{className:'muted small',textContent:'Sign in to view your cloud drawings.'}));return;}
+  $('cloud-hint').textContent=`Signed in as ${cloudUser.email||'your account'}. PDFs upload only when you choose Save current.`;
+  if(!rows.length){host.append(Object.assign(document.createElement('span'),{className:'muted small',textContent:'No cloud drawings saved yet.'}));return;}
+  for(const item of rows){
+    const row=document.createElement('div');row.className='saved-review';
+    const text=document.createElement('span');text.append(Object.assign(document.createElement('strong'),{textContent:item.file_name}));
+    text.append(Object.assign(document.createElement('small'),{textContent:`${item.page_count} pages · ${item.marker_count||0} markers · ${new Date(item.updated_at).toLocaleString()}`}));
+    const open=document.createElement('button');open.type='button';open.textContent='Open';open.onclick=()=>run(()=>openCloudDrawing(item.id));
+    const remove=document.createElement('button');remove.type='button';remove.textContent='Delete';remove.setAttribute('aria-label',`Delete saved drawing ${item.file_name}`);remove.onclick=()=>run(()=>deleteCloudDrawing(item));
+    row.append(text,open,remove);host.append(row);
   }
+}
+async function loadCloudDrawings(){
+  if(!supabaseClient||!cloudUser){refreshCloudDrawings();return;}
+  const {data,error}=await supabaseClient.from('bubble_drawing_saved_drawings').select('id,file_name,storage_path,page_count,marker_count,updated_at').eq('owner_id',cloudUser.id).order('updated_at',{ascending:false});
+  if(error){refreshCloudDrawings();$('cloud-hint').textContent=`Could not load cloud drawings: ${error.message}`;return;}
+  refreshCloudDrawings(data||[]);
+}
+async function saveCloudDrawing(){
+  if(!supabaseClient)throw new Error('Cloud storage is not configured. Add the Supabase project URL and publishable key first.');
+  if(!cloudUser){$('auth-dialog').showModal();$('auth-message').textContent='Sign in before saving a drawing.';return;}
+  if(!pdf||!original)throw new Error('Open a PDF before saving it to your account.');
+  const id=crypto.randomUUID(),storagePath=`${cloudUser.id}/${id}.pdf`,bucket=supabaseClient.storage.from('bubble-drawing-private-pdfs');
+  const {error:uploadError}=await bucket.upload(storagePath,original,{contentType:'application/pdf',upsert:false});
+  if(uploadError)throw new Error(`PDF upload failed: ${uploadError.message}`);
+  const {error:rowError}=await supabaseClient.from('bubble_drawing_saved_drawings').insert({id,owner_id:cloudUser.id,file_name:filename,storage_path:storagePath,annotations:bubbles,rotations,page_count:pdf.numPages,marker_count:bubbles.length});
+  if(rowError){await bucket.remove([storagePath]);throw new Error(`Drawing record could not be saved: ${rowError.message}`);}
+  await loadCloudDrawings();status('PDF and bubbles saved to your private Supabase account.');
+}
+async function openCloudDrawing(id){
+  if(!supabaseClient||!cloudUser)return;
+  if(original&&bubbles.length&&!confirm('Open this saved drawing? Download your current PDF and CSV first if you want to keep this work.'))return;
+  const {data:item,error:rowError}=await supabaseClient.from('bubble_drawing_saved_drawings').select('id,file_name,storage_path,page_count,annotations,rotations').eq('id',id).eq('owner_id',cloudUser.id).single();
+  if(rowError)throw new Error(`Saved drawing could not be loaded: ${rowError.message}`);
+  const {data:file,error:fileError}=await supabaseClient.storage.from('bubble-drawing-private-pdfs').download(item.storage_path);
+  if(fileError)throw new Error(`Saved PDF could not be downloaded: ${fileError.message}`);
+  if(file.size>50*1024*1024)throw new Error('This saved PDF is larger than 50 MB and cannot be opened here.');
+  if(!await loadPDF(new Uint8Array(await file.arrayBuffer()),item.file_name,true))return;
+  bubbles=Array.isArray(item.annotations)?item.annotations:[];rotations=item.rotations&&typeof item.rotations==='object'?item.rotations:{};selected=null;
+  await render(true);refresh();status(`Opened ${item.file_name} from your Supabase account.`);
+}
+async function deleteCloudDrawing(item){
+  if(!confirm(`Permanently delete “${item.file_name}” and its saved bubbles from your Supabase account?`))return;
+  const bucket=supabaseClient.storage.from('bubble-drawing-private-pdfs');
+  const {error:fileError}=await bucket.remove([item.storage_path]);
+  if(fileError)throw new Error(`PDF could not be deleted: ${fileError.message}`);
+  const {error:rowError}=await supabaseClient.from('bubble_drawing_saved_drawings').delete().eq('id',item.id).eq('owner_id',cloudUser.id);
+  if(rowError)throw new Error(`The PDF was deleted, but its saved record could not be removed: ${rowError.message}`);
+  await loadCloudDrawings();status(`Deleted ${item.file_name} from your cloud drawings.`);
+}
+async function updateCloudSession(){
+  if(!supabaseClient){$('auth-button').disabled=true;$('auth-button').textContent='Cloud not configured';refreshCloudDrawings();return;}
+  $('auth-button').disabled=false;$('auth-button').textContent=cloudUser?'Sign out':'Sign in to sync';$('auth-button').title=cloudUser?.email||'';
+  $('save-cloud').disabled=!cloudUser||!pdf||busy;
+  if(cloudUser)await loadCloudDrawings();else refreshCloudDrawings();
+}
+async function initCloud(){
+  if(!supabaseClient){await updateCloudSession();return;}
+  const {data,error}=await supabaseClient.auth.getSession();
+  if(error){$('cloud-hint').textContent=`Supabase sign-in unavailable: ${error.message}`;return;}
+  cloudUser=data.session?.user||null;await updateCloudSession();
+  supabaseClient.auth.onAuthStateChange((_event,session)=>{
+    cloudUser=session?.user||null;$('auth-button').textContent=cloudUser?'Sign out':'Sign in to sync';$('auth-button').title=cloudUser?.email||'';
+    $('save-cloud').disabled=!cloudUser||!pdf||busy;setTimeout(()=>loadCloudDrawings(),0);
+  });
 }
 function escapeHTML(value){return String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function saveReview(){
@@ -290,6 +346,30 @@ $('undo').onclick=()=>run(async()=>{if(!history.length)return;const previous=JSO
 $('setnumber').onclick=()=>run(()=>{const result=moveBubble(bubbles,selected,Number($('bubble-number').value));checkpoint();bubbles=result;refresh();status('Bubble numbers updated across the drawing and inspection list.');});
 $('sort').onclick=()=>run(()=>sortByPosition());
 $('save').onclick=()=>run(()=>saveReview());
+$('save-cloud').onclick=()=>run(saveCloudDrawing);
+$('auth-button').onclick=async()=>{
+  if(!supabaseClient)return;
+  if(cloudUser){const {error}=await supabaseClient.auth.signOut();if(error)status(`Sign out failed: ${error.message}`,true);return;}
+  $('auth-message').textContent='';$('auth-dialog').showModal();
+};
+$('auth-close').onclick=()=>$('auth-dialog').close();
+$('auth-form').onsubmit=async e=>{
+  e.preventDefault();if(!supabaseClient)return;
+  $('auth-message').textContent='Signing in…';
+  const {error}=await supabaseClient.auth.signInWithPassword({email:$('auth-email').value.trim(),password:$('auth-password').value});
+  if(error){$('auth-message').textContent=error.message;return;}
+  $('auth-dialog').close();$('auth-password').value='';status('Signed in to your Supabase account.');
+};
+$('auth-signup').onclick=async()=>{
+  if(!supabaseClient)return;
+  const email=$('auth-email').value.trim(),password=$('auth-password').value;
+  if(!$('auth-email').reportValidity()||!$('auth-password').reportValidity())return;
+  $('auth-message').textContent='Creating account…';
+  const {data,error}=await supabaseClient.auth.signUp({email,password,options:{emailRedirectTo:`${location.origin}${location.pathname}`}});
+  if(error){$('auth-message').textContent=error.message;return;}
+  if(data.session){$('auth-dialog').close();$('auth-password').value='';status('Account created and signed in.');}
+  else {$('auth-password').value='';$('auth-message').textContent='Account created. Check your email to confirm it, then sign in.';}
+};
 $('clear-saves').onclick=()=>{if(!savedReviews().length)return;localStorage.removeItem('bubble-drawing:saves');refreshSavedViews();status('Saved review history cleared.');};
 $('exportpdf').onclick=()=>run(async()=>{status('Preparing annotated PDF…');download(await annotatePDF(original,bubbles,rotations),'application/pdf',`${base()}-bubbled.pdf`);status('Bubbled PDF downloaded with your page rotations.');});
 $('exportimage').onclick=()=>$('image-dialog').showModal();
@@ -300,7 +380,7 @@ $('learn').onclick=()=>{const b=current();if(!b?.reviewed||!b.rawText)return;cor
 $('exportcsv').onclick=()=>{download(makeCSV(bubbles),'text/csv;charset=utf-8',`${base()}-inspection.csv`);status('Inspection CSV downloaded.');};
 document.addEventListener('keydown',e=>{if(e.key==='Escape')setMode(false);});
 refreshSavedViews();
-refreshRoadmap();
+void initCloud();
 window.addEventListener('beforeunload',e=>{if(bubbles.length){e.preventDefault();e.returnValue='';}});
 $('viewer').addEventListener('dragover',e=>{e.preventDefault();$('viewer').classList.add('dragover');});
 $('viewer').addEventListener('dragleave',()=>$('viewer').classList.remove('dragover'));

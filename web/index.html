@@ -1,7 +1,9 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f4f6f5">
   <title>Bubble Drawing — Engineering PDF annotations</title>
   <meta name="description" content="Add numbered bubbles to engineering drawings. Review dimensions and export annotated PDFs and inspection lists, all in your browser.">
   <link rel="icon" href="./icon.svg" type="image/svg+xml">
@@ -9,57 +11,127 @@
 </head>
 <body>
   <header class="topbar">
-    <a class="brand" href="./"><span class="brand-icon">B<span>1</span></span><span>Bubble Drawing<small>ENGINEERING WORKSPACE</small></span></a>
-    <span class="privacy">Files stay on your device</span>
-    <button id="open" class="primary">Open PDF</button>
-    <input type="file" id="file" accept=".pdf,application/pdf" hidden>
+    <a class="brand" href="./" aria-label="Bubble Drawing home">
+      <span class="brand-icon" aria-hidden="true"><span></span><i></i></span>
+      <span class="brand-name">Bubble Drawing<small>ENGINEERING WORKSPACE</small></span>
+    </a>
+    <div class="topbar-actions">
+      <span class="privacy"><span class="privacy-dot" aria-hidden="true"></span>Files stay on your device</span>
+      <button id="auth-button" class="quiet-button" type="button">Sign in to sync</button>
+      <button id="open" class="primary open-button" type="button"><span aria-hidden="true">＋</span> Open drawing</button>
+      <input type="file" id="file" accept=".pdf,application/pdf" hidden>
+    </div>
   </header>
-  <main>
-    <section class="workspace">
-      <div class="document-bar"><div><span class="eyebrow">DRAWING</span><h1 id="filename">Untitled workspace</h1></div><span id="filemeta" class="muted">PDF · up to 50 MB</span></div>
-      <div class="toolbar" aria-label="Drawing controls">
-        <div class="control-group"><button id="prev" data-needs-doc aria-label="Previous page" disabled>‹</button><label class="page-label">Page <input id="page" type="number" min="1" value="1" aria-label="Page number" data-needs-doc disabled> <span id="pages">/ —</span></label><button id="next" data-needs-doc aria-label="Next page" disabled>›</button></div>
-        <div class="control-group"><button id="zoomout" data-needs-doc aria-label="Zoom out" disabled>−</button><output id="zoom">100%</output><button id="zoomin" data-needs-doc aria-label="Zoom in" disabled>+</button><button id="fit" data-needs-doc disabled>Fit</button></div>
-        <div class="control-group tools"><button id="rotate" data-needs-doc disabled aria-label="Rotate page clockwise">↻ 90°</button><button id="add" data-needs-doc aria-pressed="false" disabled>＋ Add bubble</button><button id="add-msa" data-needs-doc aria-pressed="false" disabled>＋ MSA attribute</button><button id="detect" data-needs-doc disabled>Scan dimensions</button><button id="sort" data-needs-doc disabled>Sort by position</button><button id="save" data-needs-doc disabled>Save</button><button id="undo" disabled aria-label="Undo last annotation change">Undo</button></div>
+
+  <main class="app-shell">
+    <section class="workspace" aria-label="Drawing workspace">
+      <div class="document-bar">
+        <div class="document-title">
+          <span class="eyebrow"><span class="eyebrow-dot" aria-hidden="true"></span> ACTIVE DRAWING</span>
+          <h1 id="filename">Untitled workspace</h1>
+        </div>
+        <span id="filemeta" class="file-meta">PDF · up to 50 MB</span>
       </div>
+
+      <div class="toolbar" aria-label="Drawing controls">
+        <div class="control-group page-controls">
+          <button id="prev" data-needs-doc aria-label="Previous page" disabled>‹</button>
+          <label class="page-label">Page <input id="page" type="number" min="1" value="1" aria-label="Page number" data-needs-doc disabled> <span id="pages">/ —</span></label>
+          <button id="next" data-needs-doc aria-label="Next page" disabled>›</button>
+        </div>
+        <div class="control-group zoom-controls">
+          <button id="zoomout" data-needs-doc aria-label="Zoom out" disabled>−</button>
+          <output id="zoom">100%</output>
+          <button id="zoomin" data-needs-doc aria-label="Zoom in" disabled>+</button>
+          <button id="fit" data-needs-doc disabled>Fit</button>
+          <button id="rotate" data-needs-doc aria-label="Rotate page clockwise" disabled>↻ 90°</button>
+        </div>
+        <div class="control-group annotation-controls">
+          <button id="add" class="tool-button" data-needs-doc aria-pressed="false" disabled><span aria-hidden="true">＋</span> Add bubble</button>
+          <button id="add-msa" class="tool-button msa-tool" data-needs-doc aria-pressed="false" disabled><span aria-hidden="true">Ⓐ</span> MSA attribute</button>
+          <button id="detect" data-needs-doc disabled>Scan dimensions</button>
+          <button id="sort" data-needs-doc disabled>Sort by position</button>
+          <button id="save" data-needs-doc disabled>Save</button>
+          <button id="undo" aria-label="Undo last annotation change" disabled>Undo</button>
+        </div>
+      </div>
+
       <div id="viewer" class="viewer">
         <div id="empty" class="empty">
-          <div class="sheet-symbol" aria-hidden="true"><span>01</span><div></div><i>02</i></div>
+          <div class="empty-art" aria-hidden="true">
+            <span class="art-orbit orbit-one"></span><span class="art-orbit orbit-two"></span>
+            <span class="art-sheet"><i></i><b>01</b><em>02</em></span>
+          </div>
           <p class="eyebrow">FROM DRAWING TO INSPECTION</p>
-          <h2>Every detail. Accounted for.</h2>
-          <p>Open a drawing, place your numbered bubbles,<br>and export a ready-to-review inspection list.</p>
-          <button id="choose" class="primary">Choose a PDF</button>
-          <button id="sample" class="text-button">Try a sample drawing</button>
-          <small>Or drop a PDF here. No account or upload required.</small>
+          <h2>Make every detail count.</h2>
+          <p class="empty-copy">Bring your drawing in. Keep every inspection point in view.</p>
+          <div class="empty-actions">
+            <button id="choose" class="primary" type="button">Choose a PDF <span aria-hidden="true">↗</span></button>
+            <button id="sample" class="text-button" type="button">Explore a sample drawing</button>
+          </div>
+          <small>Drop a PDF anywhere in the workspace · up to 50 MB · no account needed</small>
         </div>
         <div id="paper" class="paper" hidden><canvas id="canvas" aria-label="PDF drawing"></canvas><div id="overlay" aria-label="Drawing annotations"></div></div>
       </div>
-      <div class="statusbar"><span id="status" role="status" aria-live="polite">Ready to open a drawing</span><span id="review-note">Review scan suggestions against the source drawing.</span><span id="mode">REVIEW MODE</span></div>
+
+      <div class="statusbar">
+        <span id="status" role="status" aria-live="polite"><span class="status-dot" aria-hidden="true"></span> Ready to open a drawing</span>
+        <span id="review-note">Review scan suggestions against the source drawing.</span>
+        <span id="mode">REVIEW MODE</span>
+      </div>
     </section>
-    <aside>
-      <div class="panel-heading"><div><span class="eyebrow">INSPECTION</span><h2>Bubble register</h2></div><span class="count" id="count">0</span></div>
-      <div id="register" class="register"><div class="register-empty">Your inspection points will appear here.</div></div>
+
+    <aside class="inspector" aria-label="Inspection register and exports">
+      <div class="panel-heading">
+        <div><span class="eyebrow">INSPECTION</span><h2>Bubble register</h2></div>
+        <span class="count" id="count">0</span>
+      </div>
+      <p class="panel-hint">Capture a requirement for every point you mark.</p>
+      <div id="register" class="register"><div class="register-empty"><span class="register-empty-icon" aria-hidden="true">◎</span><strong>Nothing marked yet</strong><span>Add a bubble on the drawing to start your register.</span></div></div>
+
       <form id="editor" class="editor" hidden>
         <div class="editor-heading"><strong id="selected-label">Bubble 1</strong><button id="delete" type="button" class="danger">Delete</button></div>
         <div class="number-row"><label>Bubble number<input id="bubble-number" type="number" min="1" value="1"></label><button type="button" id="setnumber">Move to number</button></div>
         <label>Dimension / requirement<input id="dimension" maxlength="200" placeholder="e.g. Ø12.00 ±0.05"></label>
         <div class="fields"><label>Nominal<input id="nominal" maxlength="80" placeholder="12.00"></label><label>Tolerance<input id="tolerance" maxlength="80" placeholder="Not specified"></label></div>
         <div class="fields"><label>Feature / GD&amp;T<input id="feature" maxlength="80" placeholder="e.g. Position"></label><label>Datums<input id="datums" maxlength="80" placeholder="e.g. A | B | C"></label></div>
-        <label>Notes<textarea id="notes" maxlength="500" rows="2" placeholder="Inspection notes"></textarea></label>
+        <label>Notes<textarea id="notes" maxlength="500" placeholder="Inspection notes" rows="2"></textarea></label>
         <div class="editor-actions"><label class="check"><input id="reviewed" type="checkbox"> Reviewed</label><button id="moveup" type="button" aria-label="Move selected bubble earlier">↑</button><button id="movedown" type="button" aria-label="Move selected bubble later">↓</button></div>
-        <p id="source-info" class="small muted"></p><button id="learn" type="button" class="text-button">Remember this correction</button>
+        <p id="source-info" class="small muted"></p>
+        <button id="learn" type="button" class="text-button">Remember this correction</button>
         <p class="small muted">Changes save to this session automatically.</p>
       </form>
-      <div class="exports"><p id="review-summary">Add a bubble to begin.</p><button id="exportpdf" class="primary" data-needs-doc disabled>Download bubbled PDF</button><div class="fields"><button id="exportimage" data-needs-doc disabled>Save image</button><button id="print" data-needs-doc disabled>Print</button></div><button id="exportcsv" disabled>Download inspection CSV</button><p id="learning-status" class="small">Learning: 0 confirmed corrections this session.</p><div class="saved-heading"><strong>Saved reviews</strong><button id="clear-saves" type="button">Clear</button></div><div id="saved-reviews" class="saved-reviews"><span class="muted small">No saved reviews yet.</span></div></div>
-      <section class="roadmap-panel" aria-labelledby="roadmap-title"><div class="roadmap-heading"><div><span class="eyebrow">LEARNING PATH</span><h2 id="roadmap-title">Inspection roadmap</h2></div><span id="roadmap-progress" class="roadmap-progress">0/5</span></div><p class="small muted">Five short checkpoints to turn a drawing into a review-ready inspection record.</p><div id="roadmap-steps" class="roadmap-steps"></div></section>
+
+      <div class="inspector-bottom">
+        <section class="exports" aria-label="Export drawing and inspection data">
+          <div class="section-label"><span class="eyebrow">DELIVER</span><span aria-hidden="true">↗</span></div>
+          <p id="review-summary">Add a bubble to begin.</p>
+          <button id="exportpdf" class="primary" data-needs-doc disabled>Download bubbled PDF <span aria-hidden="true">↓</span></button>
+          <div class="fields"><button id="exportimage" data-needs-doc disabled>Save image</button><button id="print" data-needs-doc disabled>Print</button></div>
+          <button id="exportcsv" disabled>Download inspection CSV</button>
+          <p id="learning-status" class="small learning-status">Learning: 0 confirmed corrections this session.</p>
+          <div class="saved-heading"><strong>Saved reviews</strong><button id="clear-saves" type="button">Clear</button></div>
+          <div id="saved-reviews" class="saved-reviews"><span class="muted small">No saved reviews yet.</span></div>
+        </section>
+
+        <section class="cloud-panel" aria-labelledby="cloud-title">
+          <div class="cloud-heading"><span class="cloud-icon" aria-hidden="true">↥</span><div><strong id="cloud-title">Your cloud drawings</strong><span>Private to your account</span></div><button id="save-cloud" type="button" disabled>Save current</button></div>
+          <p id="cloud-hint" class="small muted">Sign in to save PDFs and bubbles to your account.</p>
+          <div id="cloud-drawings" class="saved-reviews"><span class="muted small">No cloud drawings loaded.</span></div>
+        </section>
+      </div>
     </aside>
   </main>
-  <footer>Bubble Drawing <span>Local processing · PDF & CSV export</span></footer>
+
+  <footer><span>Bubble Drawing</span><span>Local processing · PDF &amp; CSV export</span></footer>
+
+  <dialog id="auth-dialog"><form id="auth-form"><h2>Sign in to Bubble Drawing</h2><p>Save drawings privately to your Supabase account and reopen them on another device.</p><label>Email<input id="auth-email" type="email" autocomplete="email" required maxlength="254"></label><label>Password<input id="auth-password" type="password" autocomplete="current-password" required minlength="6" maxlength="128"></label><p id="auth-message" class="small muted" role="status"></p><div class="dialog-actions"><button id="auth-close" type="button">Cancel</button><button id="auth-signup" type="button">Create account</button><button id="auth-signin" type="submit" class="primary">Sign in</button></div></form></dialog>
   <dialog id="scan-dialog"><form method="dialog"><h2>Scan drawing</h2><p>Capture dimension, tolerance and GD&amp;T candidates. Check every suggestion against the original.</p><label>Pages<select id="scan-pages"><option value="all">All pages</option><option value="current">Current page</option></select></label><label class="check"><input id="scan-ocr" type="checkbox" checked> Include OCR for scanned content</label><p class="small muted">OCR runs on this device and may take time. Faint text, rotated labels and GD&amp;T symbols can be missed or misread.</p><div class="dialog-actions"><button value="cancel">Cancel</button><button id="start-scan" type="button" class="primary">Start scan</button></div></form></dialog>
   <div id="scan-progress" class="progress-toast" hidden><span id="scan-message" role="status">Scanning…</span><progress id="scan-meter" max="100" value="0"></progress><button id="cancel-scan">Stop scan</button></div>
   <dialog id="image-dialog"><form method="dialog"><h2>Save drawing as image</h2><label>Format<select id="image-format"><option value="png">PNG</option><option value="jpeg">JPEG</option></select></label><label>Pages<select id="image-pages"><option value="current">Current page</option><option value="all">All pages (ZIP file)</option></select></label><label>Resolution<select id="image-dpi"><option value="150">150 DPI</option><option value="300">300 DPI</option></select></label><p class="small muted">Includes bubbles and page rotation. Very large pages are capped at 25 megapixels.</p><div class="dialog-actions"><button value="cancel">Cancel</button><button id="save-image" type="button" class="primary">Download</button></div></form></dialog>
   <dialog id="print-dialog"><form method="dialog"><h2>Print drawing</h2><label>Pages<select id="print-pages"><option value="all">All pages</option><option value="current">Current page</option></select></label><label>Drawing scale (%)<input id="print-scale" type="number" min="10" max="200" step="5" value="100"></label><p>Use the rotation buttons before printing. Scale changes the drawing size on its original paper size; above 100% may crop edges.</p><p class="small muted">In the printer dialog, select the matching paper size, 100% scale, and disable headers/footers.</p><div class="dialog-actions"><button value="cancel">Cancel</button><button id="prepare-print" type="button" class="primary">Open print preview</button></div></form></dialog>
   <script src="./vendor/jszip.min.js"></script>
+  <script src="./vendor/supabase/supabase.js"></script>
   <script type="module" src="./app.js"></script>
   <noscript>This PDF editor requires JavaScript. Enable JavaScript in your browser to open a drawing.</noscript>
 </body>
