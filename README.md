@@ -5,9 +5,9 @@ A browser-based engineering PDF annotation workspace, converted from the origina
 ## Use
 
 1. Open a PDF (up to 50 MB, 300 pages), or try the included two-page sample.
-2. Choose **Add bubble** and click on the drawing. Drag a bubble to move it, or focus it and use the arrow keys (Shift for larger steps).
-3. Select a bubble in the register to enter its requirement, nominal value, explicit tolerance, feature/GD&T, datums and notes. Mark it reviewed after checking the source.
-4. **Scan dimensions** scans the current page or the full document. It combines embedded PDF text with optional on-device English OCR and records the source and OCR confidence. Suggestions are not engineering verification and can miss faint or rotated text and complex feature-control frames.
+2. Choose **Add bubble** and click on the drawing. Drag a bubble to move it, or focus it and use the arrow keys (Shift for larger steps). Select a bubble and press **Delete** to remove it; use **Undo** to restore it.
+3. Select a bubble in the register to enter its requirement using either nominal plus tolerance or minimum and maximum values. Add feature/GD&T, datums and notes, then mark it reviewed after checking the source.
+4. **Scan dimensions** scans the current page or the full document. It combines embedded PDF text with optional on-device English OCR and records the source and OCR confidence. Bubbles are placed above or below detected values to keep text readable. Two closely aligned values may be suggested as minimum and maximum; one value is suggested as nominal. Check suggestions against the drawing because scans can miss or misread faint text, rotated labels and complex feature-control frames.
 5. Enter a bubble number directly or use the up/down controls to reorder it. Numbers remain sequential across all pages.
 6. Rotate individual pages, zoom the workspace, and print at 10–200% drawing scale. Rotation is carried into exports.
 7. Download the annotated PDF, inspection CSV, PNG/JPEG page, or a ZIP of all pages. Use **Save current** to keep the PDF and annotations in your private Supabase account.
@@ -47,3 +47,4 @@ Import this GitHub repository into Vercel. The committed `vercel.json` sets the 
 - JSZip: all-page image export.
 
 Pinned browser distributions and license files are in `web/vendor/`. Optional WebMCP tools expose reading and editing the current register in supporting browsers; unsupported browsers use the normal UI. The reusable detection instructions are in `skills/bubble-drawing-detection/SKILL.md`.
+
