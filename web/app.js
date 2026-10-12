@@ -1,6 +1,6 @@
 import * as pdfjs from './vendor/pdf.mjs';
 import { parseDimension, makeCSV, annotatePDF, makeSample } from './core.js';
-import { extractRequirement, groupTextItems, ocrLines, moveBubble, correctionKey } from './detection.js';
+import { extractRequirement, groupTextItems, groupLimitItems, ocrLines, moveBubble, correctionKey } from './detection.js';
 import { SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY } from './supabase-config.js';
 pdfjs.GlobalWorkerOptions.workerSrc = new URL('./vendor/pdf.worker.mjs', import.meta.url).href;
 const $ = id => document.getElementById(id);
@@ -37,6 +37,7 @@ async function run(action) {
 }
 function setMode(value, msa = false) { adding = value; addingMsa = value && msa; $('add').setAttribute('aria-pressed', String(adding && !addingMsa)); $('add-msa').setAttribute('aria-pressed', String(addingMsa)); $('paper').classList.toggle('adding', adding); $('mode').textContent = addingMsa ? 'PLACE MSA ATTRIBUTES' : adding ? 'PLACE BUBBLES' : 'REVIEW MODE'; }
 function clampPoint(x, y) { const margin = 12 * scale; return [Math.max(Math.min(margin,viewport.width/2),Math.min(viewport.width-margin,x)),Math.max(Math.min(margin,viewport.height/2),Math.min(viewport.height-margin,y))]; }
+function bubbleRadius(index) { return Math.max(10, String(index + 1).length * 3 + 4); }
 async function render(fit = false) {
   if(!pdf) return;
   const version = ++renderVersion;
@@ -76,7 +77,12 @@ async function openFile(file) {
   await loadPDF(new Uint8Array(await file.arrayBuffer()), file.name);
 }
 function createBubble(x, y, fields = {}) {
-  return { id: crypto.randomUUID(), page: pageNumber, x, y, dimension: '', nominal: '', tolerance: '', feature: '', datums: '', notes: '', reviewed: false, ...fields };
+  return { id: crypto.randomUUID(), page: pageNumber, x, y, dimension: '', toleranceMode: 'nominal-tolerance', nominal: '', tolerance: '', minValue: '', maxValue: '', feature: '', datums: '', notes: '', reviewed: false, ...fields };
+}
+function setToleranceFields(mode) {
+  const limits = mode === 'min-max';
+  $('nominal-tolerance-fields').hidden = limits;
+  $('min-max-fields').hidden = !limits;
 }
 function drawBubbles() {
   $('overlay').replaceChildren();
@@ -86,9 +92,9 @@ function drawBubbles() {
     const [x,y] = viewport.convertToViewportPoint(b.x,b.y);
     const button = document.createElement('button'); button.className = `bubble${b.msa ? ' msa' : ''}` + (b.id === selected ? ' selected' : '');
     const label = b.msa ? msaLabel(b) : normalLabel(b);
-    button.textContent = label; button.dataset.id = b.id; button.title = `${b.msa ? 'MSA attribute' : 'Bubble'} ${label}: ${b.dimension || 'No dimension entered'}`;
-    button.setAttribute('aria-label', button.title); button.style.left = `${x}px`; button.style.top = `${y}px`;
-    const radius = Math.max(10, String(i+1).length * 3 + 4);
+    button.textContent = label; button.dataset.id = b.id; button.title = `${b.msa ? 'MSA attribute' : 'Bubble'} ${label}: ${b.dimension || 'No dimension entered'}. Press Delete to remove.`;
+    button.setAttribute('aria-label', button.title); button.setAttribute('aria-keyshortcuts', 'Delete'); button.style.left = `${x}px`; button.style.top = `${y}px`;
+    const radius = bubbleRadius(i);
     button.style.width = button.style.height = `${radius*2*scale}px`; button.style.fontSize = `${10*scale}px`;
     button.style.borderWidth = `${1.5*scale}px`;
     button.addEventListener('pointerdown',e => {
@@ -97,15 +103,20 @@ function drawBubbles() {
       // Keep the pointer-capturing button mounted during a drag.
       document.querySelectorAll('.bubble').forEach(el=>el.classList.toggle('selected',el===button));
       refresh(false); button.setPointerCapture(e.pointerId);
-      const bounds = button.getBoundingClientRect();
-      drag = {id:b.id,startX:e.clientX,startY:e.clientY,offsetX:e.clientX-(bounds.left+bounds.width/2),offsetY:e.clientY-(bounds.top+bounds.height/2),x:b.x,y:b.y,moved:false};
+      const rect = $('paper').getBoundingClientRect();
+      const [vx,vy] = clampPoint(e.clientX-rect.left,e.clientY-rect.top);
+      const [x,y] = viewport.convertToPdfPoint(vx,vy);
+      const moved = Math.hypot(vx-viewport.convertToViewportPoint(b.x,b.y)[0],vy-viewport.convertToViewportPoint(b.x,b.y)[1])>0.5;
+      if(moved) checkpoint();
+      drag = {id:b.id,startX:e.clientX,startY:e.clientY,x:b.x,y:b.y,moved};
+      b.x=x;b.y=y;button.style.left=`${vx}px`;button.style.top=`${vy}px`;
     });
     button.addEventListener('pointermove',e => {
       if(!drag || drag.id!==b.id) return;
       if(!drag.moved && Math.hypot(e.clientX-drag.startX,e.clientY-drag.startY)<3) return;
       if(!drag.moved) checkpoint(); drag.moved=true;
       const rect = $('paper').getBoundingClientRect();
-      const [vx,vy] = clampPoint(e.clientX-rect.left-drag.offsetX,e.clientY-rect.top-drag.offsetY);
+      const [vx,vy] = clampPoint(e.clientX-rect.left,e.clientY-rect.top);
       [b.x,b.y] = viewport.convertToPdfPoint(vx,vy);
       button.style.left = `${vx}px`;button.style.top = `${vy}px`;
     });
@@ -140,7 +151,7 @@ function refresh(paint = true, editor = true) {
     $('register').append(row);
   });
   const b=current();$('editor').hidden=!b;
-  if(b&&editor){$('selected-label').textContent=`${b.msa?'MSA attribute':'Bubble'} ${b.msa?msaLabel(b):normalLabel(b)}`;for(const key of ['dimension','nominal','tolerance','feature','datums','notes']) $(key).value=b[key]||'';$('reviewed').checked=b.reviewed;$('moveup').disabled=bubbles.indexOf(b)===0;$('movedown').disabled=bubbles.indexOf(b)===bubbles.length-1;
+  if(b&&editor){$('selected-label').textContent=`${b.msa?'MSA attribute':'Bubble'} ${b.msa?msaLabel(b):normalLabel(b)}`;$('tolerance-mode').value=b.toleranceMode||'nominal-tolerance';setToleranceFields($('tolerance-mode').value);for(const key of ['dimension','nominal','tolerance','min-value','max-value','feature','datums','notes']) $(key).value=b[key==='min-value'?'minValue':key==='max-value'?'maxValue':key]||'';$('reviewed').checked=b.reviewed;$('moveup').disabled=bubbles.indexOf(b)===0;$('movedown').disabled=bubbles.indexOf(b)===bubbles.length-1;
     $('bubble-number').value=bubbles.indexOf(b)+1;$('bubble-number').max=bubbles.length;
     $('source-info').textContent=b.source?`${b.source}${b.confidence!==undefined?' · OCR confidence '+Math.round(b.confidence)+'%':''}${b.learned?' · Remembered correction':''} · Original: ${b.rawText||''}`:'Manually placed bubble';
     $('learn').disabled=!b.rawText||!b.reviewed;
@@ -251,8 +262,26 @@ async function suggest() {
       const fields=extractRequirement(item.text,corrections);if(!fields)continue;
       const [anchorX,anchorY]=vp.convertToPdfPoint(item.x,item.y);
       if(bubbles.some(b=>b.page===pno&&Math.hypot((b.anchorX??b.x)-anchorX,(b.anchorY??b.y)-anchorY)<18))continue;
-      const px=Math.max(12*vp.scale,Math.min(vp.width-12*vp.scale,item.x-17*vp.scale));
-      const py=Math.max(12*vp.scale,Math.min(vp.height-12*vp.scale,item.y-item.height/2));
+      const radius=bubbleRadius(bubbles.length)*vp.scale;
+      const gap=Math.max(3*vp.scale,(item.height||0)*.2);
+      const edge=Math.min(radius+gap,Math.max(1,Math.min(vp.width,vp.height)/2-1));
+      const left=Number.isFinite(item.left)?item.left:item.x;
+      const top=Number.isFinite(item.top)?item.top:item.y-item.height;
+      const bottom=Number.isFinite(item.bottom)?item.bottom:item.y;
+      const px=Math.max(edge,Math.min(vp.width-edge,left+Math.max(radius*1.15,Math.min((item.width||0)*.3,radius*2.5))));
+      const topY=top-radius-gap,bottomY=bottom+radius+gap;
+      const canPlaceTop=topY>=edge,canPlaceBottom=bottomY<=vp.height-edge;
+      const positions=[];
+      if(canPlaceTop)positions.push(topY);
+      if(canPlaceBottom)positions.push(bottomY);
+      if(!positions.length)positions.push(Math.max(edge,Math.min(vp.height-edge,Math.abs(topY-edge)<Math.abs(bottomY-(vp.height-edge))?topY:bottomY)));
+      const collisionCost=y=>bubbles.reduce((cost,b,index)=>{
+        if(b.page!==pno)return cost;
+        const [bx,by]=vp.convertToViewportPoint(b.x,b.y);
+        const separation=radius+bubbleRadius(index)*vp.scale+gap;
+        return cost+(Math.hypot(px-bx,y-by)<separation?1:0);
+      },0);
+      const py=positions.sort((a,b)=>collisionCost(a)-collisionCost(b) || Math.abs(a-(top+bottom)/2)-Math.abs(b-(top+bottom)/2))[0];
       const [x,y]=vp.convertToPdfPoint(px,py);
       bubbles.push(createBubble(x,y,{...fields,page:pno,anchorX,anchorY,source,...(item.confidence!==undefined?{confidence:item.confidence}:{})}));added++;
     }
@@ -262,7 +291,7 @@ async function suggest() {
       if(scanCancelled)break;
       progress(`Reading page ${pno} (${done+1}/${pages.length})…`,done/pages.length*100);
       const page=await pdf.getPage(pno),vp=page.getViewport({scale:1,rotation:(page.rotate+(rotations[pno]||0))%360});
-      const text=await page.getTextContent();addCandidates(groupTextItems(text.items,vp),vp,pno,'PDF text');
+      const text=await page.getTextContent();addCandidates([...groupLimitItems(text.items,vp),...groupTextItems(text.items,vp)],vp,pno,'PDF text');
       if(useOCR&&!scanCancelled){
         if(!ocrWorker){
           const {default:{createWorker}}=await import('./vendor/ocr/tesseract.mjs');
@@ -277,7 +306,7 @@ async function suggest() {
         await page.render({canvasContext:canvas.getContext('2d'),viewport:scanVP}).promise;
         if(scanCancelled)break;
         const result=await ocrWorker.recognize(canvas,{}, {text:true,blocks:true});
-        if(!scanCancelled)addCandidates(ocrLines(result.data),scanVP,pno,'OCR');
+        if(!scanCancelled){const lines=ocrLines(result.data);addCandidates([...groupLimitItems(lines),...lines],scanVP,pno,'OCR');}
         canvas.width=canvas.height=0;
       }
       done++;refresh();
@@ -334,12 +363,15 @@ $('overlay').onclick=e=>{
   checkpoint();const b=createBubble(x,y,{msa:addingMsa});bubbles.push(b);selected=b.id;refresh();status(`${addingMsa?'MSA attribute '+msaLabel(b):'Bubble '+normalLabel(b)} added. Enter its requirement in the register.`);
 };
 $('editor').onsubmit=e=>e.preventDefault();
-for(const key of ['dimension','nominal','tolerance','feature','datums','notes']){
-  $(key).addEventListener('focus',()=>{if(current())checkpoint();});
-  $(key).addEventListener('input',()=>{const b=current();if(b){b[key]=$(key).value;b.reviewed=false;$('reviewed').checked=false;refresh(false,false);}});
+const requirementInputs=[['dimension','dimension'],['nominal','nominal'],['tolerance','tolerance'],['min-value','minValue'],['max-value','maxValue'],['feature','feature'],['datums','datums'],['notes','notes']];
+for(const [id,key] of requirementInputs){
+  $(id).addEventListener('focus',()=>{if(current())checkpoint();});
+  $(id).addEventListener('input',()=>{const b=current();if(b){b[key]=$(id).value;b.reviewed=false;$('reviewed').checked=false;refresh(false,false);}});
 }
+$('tolerance-mode').addEventListener('change',()=>{const b=current();if(!b)return;checkpoint();b.toleranceMode=$('tolerance-mode').value;b.reviewed=false;$('reviewed').checked=false;setToleranceFields(b.toleranceMode);refresh(false,false);});
 $('reviewed').onchange=()=>{const b=current();if(b){checkpoint();b.reviewed=$('reviewed').checked;refresh(false);}};
-$('delete').onclick=()=>{if(!current())return;checkpoint();bubbles=bubbles.filter(b=>b.id!==selected);selected=null;refresh();status('Bubble removed. Use Undo to restore it.');};
+function deleteSelectedBubble(){if(!current())return;checkpoint();bubbles=bubbles.filter(b=>b.id!==selected);selected=null;refresh();status('Bubble removed. Use Undo to restore it.');}
+$('delete').onclick=deleteSelectedBubble;
 function reorder(delta){const i=bubbles.findIndex(b=>b.id===selected),j=i+delta;if(i<0||j<0||j>=bubbles.length)return;checkpoint();[bubbles[i],bubbles[j]]=[bubbles[j],bubbles[i]];refresh();}
 $('moveup').onclick=()=>reorder(-1);$('movedown').onclick=()=>reorder(1);
 $('undo').onclick=()=>run(async()=>{if(!history.length)return;const previous=JSON.parse(history.pop());bubbles=previous.bubbles;rotations=previous.rotations;if(!current())selected=null;await render();refresh();status('Last annotation change undone.');});
@@ -376,9 +408,15 @@ $('exportimage').onclick=()=>$('image-dialog').showModal();
 $('save-image').onclick=()=>{$('image-dialog').close();run(saveImages);};
 $('print').onclick=()=>$('print-dialog').showModal();
 $('prepare-print').onclick=()=>{const percentage=Number($('print-scale').value);if(!Number.isFinite(percentage)||percentage<10||percentage>200){$('print-scale').reportValidity();return;}const win=window.open('','_blank');if(!win){status('Allow pop-ups for this site to open print preview.',true);return;}$('print-dialog').close();const pages=$('print-pages').value==='all'?Array.from({length:pdf.numPages},(_,i)=>i+1):[pageNumber];run(()=>preparePrint(win,percentage,pages));};
-$('learn').onclick=()=>{const b=current();if(!b?.reviewed||!b.rawText)return;corrections[correctionKey(b.rawText)]=Object.fromEntries(['dimension','nominal','tolerance','feature','datums','notes'].map(key=>[key,b[key]||'']));$('learning-status').textContent=`Learning: ${Object.keys(corrections).length} confirmed corrections this session.`;status('Correction remembered for matching text in future scans this session.');};
+$('learn').onclick=()=>{const b=current();if(!b?.reviewed||!b.rawText)return;corrections[correctionKey(b.rawText)]=Object.fromEntries(['dimension','toleranceMode','nominal','tolerance','minValue','maxValue','feature','datums','notes'].map(key=>[key,b[key]||'']));$('learning-status').textContent=`Learning: ${Object.keys(corrections).length} confirmed corrections this session.`;status('Correction remembered for matching text in future scans this session.');};
 $('exportcsv').onclick=()=>{download(makeCSV(bubbles),'text/csv;charset=utf-8',`${base()}-inspection.csv`);status('Inspection CSV downloaded.');};
-document.addEventListener('keydown',e=>{if(e.key==='Escape')setMode(false);});
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'){setMode(false);return;}
+  if(e.key!=='Delete'||busy||e.isComposing||e.ctrlKey||e.altKey||e.metaKey)return;
+  if(e.target.closest('input,textarea,select,[contenteditable="true"],dialog'))return;
+  if(!current())return;
+  e.preventDefault();deleteSelectedBubble();
+});
 refreshSavedViews();
 void initCloud();
 window.addEventListener('beforeunload',e=>{if(bubbles.length){e.preventDefault();e.returnValue='';}});
@@ -391,10 +429,11 @@ if(mc?.registerTool){
   const lifecycle=new AbortController();
   const register=tool=>{try{Promise.resolve(mc.registerTool(tool,{signal:lifecycle.signal})).catch(()=>{});}catch{}};
   register({name:'read_bubble_register',description:'Read the current local PDF bubble register.',inputSchema:{type:'object',properties:{},additionalProperties:false},annotations:{readOnlyHint:true,untrustedContentHint:true},execute:()=>({filename,page:pageNumber,bubbles:bubbles.map((b,i)=>({...b,number:i+1}))})});
-  register({name:'update_bubble_requirement',description:'Edit an existing bubble requirement and mark it for review. Does not export or upload files.',inputSchema:{type:'object',properties:{number:{type:'integer',minimum:1},dimension:{type:'string',maxLength:200},nominal:{type:'string',maxLength:80},tolerance:{type:'string',maxLength:80}},required:['number','dimension'],additionalProperties:false},annotations:{readOnlyHint:false,untrustedContentHint:true},execute:input=>{
+  register({name:'update_bubble_requirement',description:'Edit an existing bubble requirement and mark it for review. Does not export or upload files.',inputSchema:{type:'object',properties:{number:{type:'integer',minimum:1},dimension:{type:'string',maxLength:200},toleranceMode:{type:'string',enum:['nominal-tolerance','min-max']},nominal:{type:'string',maxLength:80},tolerance:{type:'string',maxLength:80},minValue:{type:'string',maxLength:80},maxValue:{type:'string',maxLength:80}},required:['number','dimension'],additionalProperties:false},annotations:{readOnlyHint:false,untrustedContentHint:true},execute:input=>{
     if(busy||!input||!Number.isInteger(input.number)||!bubbles[input.number-1]||typeof input.dimension!=='string'||input.dimension.length>200)throw new Error('Select a valid bubble and a requirement of 200 characters or fewer.');
-    for(const key of ['nominal','tolerance'])if(input[key]!==undefined&&(typeof input[key]!=='string'||input[key].length>80))throw new Error('Invalid nominal or tolerance.');
-    checkpoint();const b=bubbles[input.number-1];b.dimension=input.dimension;for(const key of ['nominal','tolerance'])if(input[key]!==undefined)b[key]=input[key];b.reviewed=false;refresh();return {number:input.number,dimension:b.dimension,reviewed:false};
+    for(const key of ['nominal','tolerance','minValue','maxValue'])if(input[key]!==undefined&&(typeof input[key]!=='string'||input[key].length>80))throw new Error('Invalid nominal, tolerance, minimum, or maximum.');
+    checkpoint();const b=bubbles[input.number-1];b.dimension=input.dimension;for(const key of ['toleranceMode','nominal','tolerance','minValue','maxValue'])if(input[key]!==undefined)b[key]=input[key];b.reviewed=false;refresh();return {number:input.number,dimension:b.dimension,reviewed:false};
   }});
   window.addEventListener('pagehide',()=>lifecycle.abort(),{once:true});
 }
+
