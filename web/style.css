@@ -69,6 +69,8 @@ h1 { margin: 5px 0 0; color: var(--ink); font-size: 17px; line-height: 1.3; lett
 button[aria-pressed="true"] { background: #e5f2f3; border-color: #89b7ba; color: var(--blue-dark); box-shadow: inset 0 0 0 1px #89b7ba; }
 .toolbar button[aria-pressed="true"] { background: #dcebed; border-color: #afcccd; }
 .viewer { position: relative; display: flex; flex: 1 1 auto; align-items: flex-start; justify-content: center; min-height: 475px; height: calc(100vh - 300px); overflow: auto; padding: 30px; overscroll-behavior: contain; background-color: var(--canvas); background-image: radial-gradient(#c9d2cd 0.7px, transparent .7px); background-size: 19px 19px; }
+.viewer.has-drawing:not(.panning):not(.placing) { cursor: grab; }
+.viewer.panning { cursor: grabbing; user-select: none; }
 .empty { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; min-height: 100%; padding: 25px 15px; text-align: center; }
 .empty-art { position: relative; width: 170px; height: 145px; margin: 0 0 15px; }
 .art-sheet { position: absolute; z-index: 2; left: 44px; top: 12px; width: 87px; height: 114px; border: 1px solid #d0dad5; border-radius: 6px; background: #fff; box-shadow: 0 9px 24px #183a3a12; transform: rotate(-6deg); }

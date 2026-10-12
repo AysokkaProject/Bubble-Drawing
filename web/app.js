@@ -6,7 +6,8 @@ pdfjs.GlobalWorkerOptions.workerSrc = new URL('./vendor/pdf.worker.mjs', import.
 const $ = id => document.getElementById(id);
 let pdf = null, original = null, filename = '', pageNumber = 1, viewport = null;
 let scale = 1, bubbles = [], selected = null, adding = false, addingMsa = false, history = [], busy = false;
-let renderTask = null, renderVersion = 0, drag = null;
+let renderTask = null, renderVersion = 0, drag = null, pan = null;
+let wheelZoomFrame = 0, wheelZoomTarget = null, wheelZoomPoint = null;
 let rotations = {}, corrections = {}, scanCancelled = false, ocrWorker = null;
 let supabaseClient = null, cloudUser = null;
 if (SUPABASE_URL && SUPABASE_PUBLISHABLE_KEY && window.supabase?.createClient) {
@@ -35,7 +36,7 @@ async function run(action) {
   try { await action(); } catch(e) { console.error(e); status(e.message || 'Something went wrong. Please try again.', true); }
   finally { busy = false; controls(); }
 }
-function setMode(value, msa = false) { adding = value; addingMsa = value && msa; $('add').setAttribute('aria-pressed', String(adding && !addingMsa)); $('add-msa').setAttribute('aria-pressed', String(addingMsa)); $('paper').classList.toggle('adding', adding); $('mode').textContent = addingMsa ? 'PLACE MSA ATTRIBUTES' : adding ? 'PLACE BUBBLES' : 'REVIEW MODE'; }
+function setMode(value, msa = false) { adding = value; addingMsa = value && msa; $('add').setAttribute('aria-pressed', String(adding && !addingMsa)); $('add-msa').setAttribute('aria-pressed', String(addingMsa)); $('paper').classList.toggle('adding', adding); $('viewer').classList.toggle('placing', adding); $('mode').textContent = addingMsa ? 'PLACE MSA ATTRIBUTES' : adding ? 'PLACE BUBBLES' : 'REVIEW MODE'; }
 function clampPoint(x, y) { const margin = 12 * scale; return [Math.max(Math.min(margin,viewport.width/2),Math.min(viewport.width-margin,x)),Math.max(Math.min(margin,viewport.height/2),Math.min(viewport.height-margin,y))]; }
 function bubbleRadius(index) { return Math.max(10, String(index + 1).length * 3 + 4); }
 async function render(fit = false) {
@@ -57,6 +58,17 @@ async function render(fit = false) {
   try { await renderTask.promise; } catch(e) { if(e.name !== 'RenderingCancelledException') throw e; }
   if(version === renderVersion) { renderTask = null; drawBubbles(); controls(); }
 }
+async function zoomAtPoint(targetScale, clientX, clientY) {
+  if(!pdf)return;
+  const before=$('paper').getBoundingClientRect();
+  if(!before.width||!before.height)return;
+  const anchorX=(clientX-before.left)/before.width, anchorY=(clientY-before.top)/before.height;
+  scale=Math.max(.15,Math.min(3,targetScale));
+  await render();
+  const after=$('paper').getBoundingClientRect(), viewerRect=$('viewer').getBoundingClientRect();
+  $('viewer').scrollLeft+=after.left-viewerRect.left+anchorX*after.width-(clientX-viewerRect.left);
+  $('viewer').scrollTop+=after.top-viewerRect.top+anchorY*after.height-(clientY-viewerRect.top);
+}
 async function loadPDF(bytes, name, skipConfirm = false) {
   if(!skipConfirm && original && bubbles.length && !confirm('Open a different drawing? Download your current PDF and CSV first if you want to keep this work.')) return false;
   status('Opening drawing…');
@@ -66,7 +78,7 @@ async function loadPDF(bytes, name, skipConfirm = false) {
   pdf = candidate; original = bytes; filename = name; pageNumber = 1; bubbles = []; history = []; selected = null;
   rotations = {};
   $('filename').textContent = name; $('filemeta').textContent = `${pdf.numPages} page${pdf.numPages===1?'':'s'} · ${(bytes.length/1024/1024).toFixed(1)} MB`;
-  $('empty').hidden = true; $('paper').hidden = false; setMode(false); refresh();
+  $('empty').hidden = true; $('paper').hidden = false; $('viewer').classList.add('has-drawing'); setMode(false); refresh();
   await render(true); status('Drawing ready. Add bubbles manually or scan dimensions across the drawing.');
   return true;
 }
@@ -351,6 +363,30 @@ $('page').onchange=()=>run(async()=>{pageNumber=Math.max(1,Math.min(pdf.numPages
 $('zoomin').onclick=()=>run(async()=>{scale=Math.min(3,scale*1.2);await render();});
 $('zoomout').onclick=()=>run(async()=>{scale=Math.max(.15,scale/1.2);await render();});
 $('fit').onclick=()=>run(()=>render(true));
+$('viewer').addEventListener('wheel',e=>{
+  if(!pdf||busy||e.deltaY===0||e.target.closest('button,input,select,textarea'))return;
+  e.preventDefault();
+  wheelZoomTarget=Math.max(.15,Math.min(3,(wheelZoomTarget??scale)*Math.exp(-e.deltaY*.0012)));
+  wheelZoomPoint={x:e.clientX,y:e.clientY};
+  if(!wheelZoomFrame)wheelZoomFrame=requestAnimationFrame(()=>{
+    wheelZoomFrame=0;const target=wheelZoomTarget,point=wheelZoomPoint;wheelZoomTarget=wheelZoomPoint=null;
+    void zoomAtPoint(target,point.x,point.y).catch(error=>{console.error(error);status('Zoom failed. Please try again.',true);});
+  });
+},{passive:false});
+$('viewer').addEventListener('pointerdown',e=>{
+  if(!pdf||busy||adding||e.button!==0||e.target.closest('.bubble,button,input,select,textarea'))return;
+  pan={pointerId:e.pointerId,x:e.clientX,y:e.clientY,left:$('viewer').scrollLeft,top:$('viewer').scrollTop,moved:false};
+  $('viewer').setPointerCapture(e.pointerId);
+});
+$('viewer').addEventListener('pointermove',e=>{
+  if(!pan||pan.pointerId!==e.pointerId)return;
+  if(!pan.moved&&Math.hypot(e.clientX-pan.x,e.clientY-pan.y)<3)return;
+  pan.moved=true;$('viewer').classList.add('panning');
+  $('viewer').scrollLeft=pan.left-(e.clientX-pan.x);$('viewer').scrollTop=pan.top-(e.clientY-pan.y);
+});
+function stopPanning(e){if(pan&&pan.pointerId===e.pointerId){pan=null;$('viewer').classList.remove('panning');}}
+$('viewer').addEventListener('pointerup',stopPanning);
+$('viewer').addEventListener('pointercancel',stopPanning);
 $('add').onclick=()=>{setMode(!(adding&&!addingMsa));status(adding?'Click on the drawing to add a bubble. You can still move existing bubbles. Press Escape to finish.':'Select a bubble to edit it.');};
 $('add-msa').onclick=()=>{setMode(!(adding&&addingMsa),true);status(addingMsa?'Click on the drawing to add a green MSA attribute. Press Escape to finish.':'Select a bubble to edit it.');};
 $('detect').onclick=()=>$('scan-dialog').showModal();
