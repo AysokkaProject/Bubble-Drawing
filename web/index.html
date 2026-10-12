@@ -41,9 +41,11 @@
         </div>
         <div class="control-group zoom-controls">
           <button id="zoomout" data-needs-doc aria-label="Zoom out" disabled>−</button>
-          <output id="zoom">100%</output>
+          <label class="zoom-value"><input id="zoom" type="number" min="15" max="6400" step="5" value="100" aria-label="Zoom percentage" data-needs-doc disabled><span>%</span></label>
           <button id="zoomin" data-needs-doc aria-label="Zoom in" disabled>+</button>
-          <button id="fit" data-needs-doc disabled>Fit</button>
+          <select id="zoom-preset" aria-label="Zoom preset" data-needs-doc disabled>
+            <option value="" selected>Zoom</option><option value="actual">Actual size</option><option value="fit-width">Fit width</option><option value="fit-page">Fit page</option>
+          </select>
           <button id="rotate" data-needs-doc aria-label="Rotate page clockwise" disabled>↻ 90°</button>
         </div>
         <div class="control-group annotation-controls">

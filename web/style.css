@@ -60,7 +60,10 @@ h1 { margin: 5px 0 0; color: var(--ink); font-size: 17px; line-height: 1.3; lett
 .page-label { display: flex; align-items: center; gap: 5px; color: #65767d; font-size: 11px; white-space: nowrap; }
 .page-label input { width: 38px; padding: 6px 3px; text-align: center; color: var(--ink); background: white; border: 1px solid #dce4e2; border-radius: 6px; appearance: textfield; }
 .page-label input::-webkit-inner-spin-button { appearance: none; }
-#zoom { min-width: 36px; text-align: center; color: #65767d; font-size: 10px; font-variant-numeric: tabular-nums; }
+.zoom-value { display: inline-flex; align-items: center; gap: 2px; padding: 0 3px; color: #65767d; font-size: 10px; }
+#zoom { width: 42px; min-width: 0; padding: 5px 2px; border: 1px solid #e7ecea; border-radius: 5px; background: white; text-align: center; color: #65767d; font-size: 10px; font-variant-numeric: tabular-nums; appearance: textfield; }
+#zoom::-webkit-inner-spin-button { appearance: none; }
+#zoom-preset { min-height: 34px; max-width: 106px; padding: 5px 7px; border: 1px solid #e7ecea; border-radius: 6px; background: white; color: #65767d; font-size: 10px; }
 .toolbar .tool-button { padding-inline: 10px; color: #fff; background: var(--blue); border-color: var(--blue); }
 .toolbar .tool-button:hover:not(:disabled) { background: var(--blue-dark); border-color: var(--blue-dark); }
 .toolbar .tool-button span { padding-right: 4px; }
@@ -68,7 +71,7 @@ h1 { margin: 5px 0 0; color: var(--ink); font-size: 17px; line-height: 1.3; lett
 .toolbar .msa-tool:hover:not(:disabled) { color: #225b40; background: #e4f2da; border-color: #cbe1bc; }
 button[aria-pressed="true"] { background: #e5f2f3; border-color: #89b7ba; color: var(--blue-dark); box-shadow: inset 0 0 0 1px #89b7ba; }
 .toolbar button[aria-pressed="true"] { background: #dcebed; border-color: #afcccd; }
-.viewer { position: relative; display: flex; flex: 1 1 auto; align-items: flex-start; justify-content: center; min-height: 475px; height: calc(100vh - 300px); overflow: auto; padding: 30px; overscroll-behavior: contain; background-color: var(--canvas); background-image: radial-gradient(#c9d2cd 0.7px, transparent .7px); background-size: 19px 19px; }
+.viewer { position: relative; display: block; flex: 1 1 auto; min-height: 475px; height: calc(100vh - 300px); overflow: auto; padding: 30px; overscroll-behavior: contain; touch-action: none; background-color: var(--canvas); background-image: radial-gradient(#c9d2cd 0.7px, transparent .7px); background-size: 19px 19px; }
 .viewer.has-drawing:not(.panning):not(.placing) { cursor: grab; }
 .viewer.panning { cursor: grabbing; user-select: none; }
 .empty { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; min-height: 100%; padding: 25px 15px; text-align: center; }
@@ -93,7 +96,7 @@ button[aria-pressed="true"] { background: #e5f2f3; border-color: #89b7ba; color:
 .text-button { padding: 8px 10px; color: var(--blue); border-color: transparent; background: transparent; }
 .text-button:hover:not(:disabled) { color: var(--blue-dark); background: var(--blue-wash); border-color: transparent; }
 .empty small { margin-top: 19px; color: #859298; font-size: 10px; }
-.paper { position: relative; margin: 0 auto; background: white; box-shadow: 0 5px 28px #192f3a22; touch-action: pan-x pan-y; }
+.paper { position: relative; display: block; flex: none; margin: 0 auto; background: white; box-shadow: 0 5px 28px #192f3a22; touch-action: none; }
 .paper canvas { display: block; width: 100%; height: 100%; }
 #overlay { position: absolute; inset: 0; }
 .bubble { position: absolute; display: grid; place-items: center; transform: translate(-50%,-50%); padding: 0; border: 2px solid var(--coral); border-radius: 50%; color: #bd4d3b; background: #fffdf1ed; font-weight: 760; box-shadow: 0 2px 6px #182a321c; cursor: grab; touch-action: none; user-select: none; }
@@ -254,7 +257,8 @@ dialog p { color: #718187; font-size: 12px; line-height: 1.6; }
   .open-button span { font-size: 20px; }
   .page-label { gap: 3px; font-size: 9px; }
   .page-label input { width: 32px; padding: 5px 1px; font-size: 10px; }
-  #zoom { min-width: 30px; }
+  #zoom { width: 36px; }
+  #zoom-preset { max-width: 88px; }
   .toolbar button { font-size: 9px; }
   .fields { gap: 6px; }
   .empty-actions { flex-direction: column; gap: 4px; }

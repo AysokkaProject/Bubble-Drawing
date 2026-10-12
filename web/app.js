@@ -8,6 +8,8 @@ let pdf = null, original = null, filename = '', pageNumber = 1, viewport = null;
 let scale = 1, bubbles = [], selected = null, adding = false, addingMsa = false, history = [], busy = false;
 let renderTask = null, renderVersion = 0, drag = null, pan = null;
 let wheelZoomFrame = 0, wheelZoomTarget = null, wheelZoomPoint = null;
+const MIN_ZOOM = .15, MAX_ZOOM = 64, activeTouches = new Map();
+let pinchGesture = null;
 let rotations = {}, corrections = {}, scanCancelled = false, ocrWorker = null;
 let supabaseClient = null, cloudUser = null;
 if (SUPABASE_URL && SUPABASE_PUBLISHABLE_KEY && window.supabase?.createClient) {
@@ -47,12 +49,15 @@ async function render(fit = false) {
   if(version !== renderVersion) return;
   const rotation = (page.rotate + (rotations[pageNumber]||0)) % 360;
   const natural = page.getViewport({ scale: 1, rotation });
-  if(fit) scale = Math.max(.15, Math.min(2, ($('viewer').clientWidth - 52)/natural.width));
+  if(fit) {
+    const viewer=$('viewer'),fitScale=fit==='page'?Math.min((viewer.clientWidth-60)/natural.width,(viewer.clientHeight-60)/natural.height):(viewer.clientWidth-60)/natural.width;
+    scale=Math.max(MIN_ZOOM,Math.min(2,fitScale));
+  }
   viewport = page.getViewport({ scale, rotation });
   const ratio = Math.min(window.devicePixelRatio || 1, 2, 4500 / Math.max(viewport.width, viewport.height));
   $('canvas').width = Math.round(viewport.width * ratio); $('canvas').height = Math.round(viewport.height * ratio);
   $('paper').style.width = `${viewport.width}px`; $('paper').style.height = `${viewport.height}px`;
-  $('zoom').textContent = `${Math.round(scale*100)}%`; $('page').value = pageNumber; $('page').max = pdf.numPages;
+  $('zoom').value = Math.round(scale*100); $('page').value = pageNumber; $('page').max = pdf.numPages;
   $('pages').textContent = `/ ${pdf.numPages}`;
   renderTask = page.render({ canvasContext: $('canvas').getContext('2d'), viewport, transform: [ratio,0,0,ratio,0,0] });
   try { await renderTask.promise; } catch(e) { if(e.name !== 'RenderingCancelledException') throw e; }
@@ -62,12 +67,29 @@ async function zoomAtPoint(targetScale, clientX, clientY) {
   if(!pdf)return;
   const before=$('paper').getBoundingClientRect();
   if(!before.width||!before.height)return;
-  const anchorX=(clientX-before.left)/before.width, anchorY=(clientY-before.top)/before.height;
-  scale=Math.max(.15,Math.min(3,targetScale));
+  const anchorX=Math.max(0,Math.min(1,(clientX-before.left)/before.width)), anchorY=Math.max(0,Math.min(1,(clientY-before.top)/before.height));
+  scale=Math.max(MIN_ZOOM,Math.min(MAX_ZOOM,targetScale));
   await render();
   const after=$('paper').getBoundingClientRect(), viewerRect=$('viewer').getBoundingClientRect();
   $('viewer').scrollLeft+=after.left-viewerRect.left+anchorX*after.width-(clientX-viewerRect.left);
   $('viewer').scrollTop+=after.top-viewerRect.top+anchorY*after.height-(clientY-viewerRect.top);
+}
+function zoomAtViewerCenter(targetScale){const rect=$('viewer').getBoundingClientRect();return zoomAtPoint(targetScale,rect.left+rect.width/2,rect.top+rect.height/2);}
+function scheduleZoomAt(targetScale,point){
+  wheelZoomTarget=targetScale;wheelZoomPoint=point;
+  if(wheelZoomFrame)return;
+  wheelZoomFrame=requestAnimationFrame(()=>{
+    wheelZoomFrame=0;const target=wheelZoomTarget,anchor=wheelZoomPoint;wheelZoomTarget=wheelZoomPoint=null;
+    void zoomAtPoint(target,anchor.x,anchor.y).catch(error=>{console.error(error);status('Zoom failed. Please try again.',true);});
+  });
+}
+function touchPoint(event){return{x:event.clientX,y:event.clientY};}
+function touchMidpoint(a,b){return{x:(a.x+b.x)/2,y:(a.y+b.y)/2};}
+function touchDistance(a,b){return Math.hypot(a.x-b.x,a.y-b.y);}
+function cancelBubbleDragForPinch(){
+  if(!drag)return;
+  const bubble=bubbles.find(item=>item.id===drag.id);if(bubble){bubble.x=drag.x;bubble.y=drag.y;}
+  drag=null;drawBubbles();
 }
 async function loadPDF(bytes, name, skipConfirm = false) {
   if(!skipConfirm && original && bubbles.length && !confirm('Open a different drawing? Download your current PDF and CSV first if you want to keep this work.')) return false;
@@ -360,31 +382,62 @@ $('sample').onclick=()=>run(async()=>loadPDF(await makeSample(),'Sample mounting
 $('prev').onclick=()=>run(async()=>{pageNumber--;await render();});
 $('next').onclick=()=>run(async()=>{pageNumber++;await render();});
 $('page').onchange=()=>run(async()=>{pageNumber=Math.max(1,Math.min(pdf.numPages,Number.parseInt($('page').value,10)||1));await render();});
-$('zoomin').onclick=()=>run(async()=>{scale=Math.min(3,scale*1.2);await render();});
-$('zoomout').onclick=()=>run(async()=>{scale=Math.max(.15,scale/1.2);await render();});
-$('fit').onclick=()=>run(()=>render(true));
+$('zoomin').onclick=()=>run(()=>zoomAtViewerCenter(scale*1.2));
+$('zoomout').onclick=()=>run(()=>zoomAtViewerCenter(scale/1.2));
+$('zoom').onchange=()=>run(()=>zoomAtViewerCenter(Number($('zoom').value)/100));
+$('zoom-preset').onchange=()=>{
+  const mode=$('zoom-preset').value;$('zoom-preset').value='';
+  if(mode==='actual')run(()=>zoomAtViewerCenter(1));
+  else if(mode==='fit-width'||mode==='fit-page')run(async()=>{await render(mode==='fit-page'?'page':true);$('viewer').scrollTo(0,0);});
+};
 $('viewer').addEventListener('wheel',e=>{
   if(!pdf||busy||e.deltaY===0||e.target.closest('button,input,select,textarea'))return;
   e.preventDefault();
-  wheelZoomTarget=Math.max(.15,Math.min(3,(wheelZoomTarget??scale)*Math.exp(-e.deltaY*.0012)));
-  wheelZoomPoint={x:e.clientX,y:e.clientY};
-  if(!wheelZoomFrame)wheelZoomFrame=requestAnimationFrame(()=>{
-    wheelZoomFrame=0;const target=wheelZoomTarget,point=wheelZoomPoint;wheelZoomTarget=wheelZoomPoint=null;
-    void zoomAtPoint(target,point.x,point.y).catch(error=>{console.error(error);status('Zoom failed. Please try again.',true);});
-  });
+  scheduleZoomAt(Math.max(MIN_ZOOM,Math.min(MAX_ZOOM,(wheelZoomTarget??scale)*Math.exp(-e.deltaY*.0012))),{x:e.clientX,y:e.clientY});
 },{passive:false});
 $('viewer').addEventListener('pointerdown',e=>{
-  if(!pdf||busy||adding||e.button!==0||e.target.closest('.bubble,button,input,select,textarea'))return;
-  pan={pointerId:e.pointerId,x:e.clientX,y:e.clientY,left:$('viewer').scrollLeft,top:$('viewer').scrollTop,moved:false};
-  $('viewer').setPointerCapture(e.pointerId);
-});
+  if(!pdf||busy)return;
+  const viewer=$('viewer');
+  if(e.pointerType==='touch'){
+    activeTouches.set(e.pointerId,touchPoint(e));
+    if(activeTouches.size===2){
+      const points=[...activeTouches.values()];
+      for(const id of activeTouches.keys()){try{viewer.setPointerCapture(id);}catch{}}
+      cancelBubbleDragForPinch();pinchGesture={distance:Math.max(1,touchDistance(points[0],points[1])),scale};pan=null;
+      e.preventDefault();e.stopPropagation();return;
+    }
+    if(activeTouches.size===1&&!adding&&!e.target.closest('.bubble')){
+      pan={pointerId:e.pointerId,x:e.clientX,y:e.clientY,left:viewer.scrollLeft,top:viewer.scrollTop,moved:false};
+      viewer.setPointerCapture(e.pointerId);e.preventDefault();
+    }
+    return;
+  }
+  if(adding||e.button!==0||e.target.closest('.bubble,button,input,select,textarea'))return;
+  pan={pointerId:e.pointerId,x:e.clientX,y:e.clientY,left:viewer.scrollLeft,top:viewer.scrollTop,moved:false};viewer.setPointerCapture(e.pointerId);
+},{capture:true});
 $('viewer').addEventListener('pointermove',e=>{
+  if(activeTouches.has(e.pointerId))activeTouches.set(e.pointerId,touchPoint(e));
+  if(activeTouches.size>=2&&pinchGesture){
+    const points=[...activeTouches.values()],center=touchMidpoint(points[0],points[1]);
+    scheduleZoomAt(pinchGesture.scale*touchDistance(points[0],points[1])/pinchGesture.distance,center);
+    e.preventDefault();e.stopPropagation();return;
+  }
   if(!pan||pan.pointerId!==e.pointerId)return;
   if(!pan.moved&&Math.hypot(e.clientX-pan.x,e.clientY-pan.y)<3)return;
   pan.moved=true;$('viewer').classList.add('panning');
   $('viewer').scrollLeft=pan.left-(e.clientX-pan.x);$('viewer').scrollTop=pan.top-(e.clientY-pan.y);
-});
-function stopPanning(e){if(pan&&pan.pointerId===e.pointerId){pan=null;$('viewer').classList.remove('panning');}}
+  e.preventDefault();
+},{capture:true});
+function stopPanning(e){
+  const viewer=$('viewer');
+  if(e.pointerType==='touch'){
+    activeTouches.delete(e.pointerId);if(activeTouches.size<2)pinchGesture=null;
+    if(activeTouches.size===1){const[id,point]=[...activeTouches.entries()][0];pan={pointerId:id,x:point.x,y:point.y,left:viewer.scrollLeft,top:viewer.scrollTop,moved:true};try{viewer.setPointerCapture(id);}catch{}}
+    else if(!activeTouches.size)pan=null;
+    return;
+  }
+  if(pan&&pan.pointerId===e.pointerId){pan=null;viewer.classList.remove('panning');}
+}
 $('viewer').addEventListener('pointerup',stopPanning);
 $('viewer').addEventListener('pointercancel',stopPanning);
 $('add').onclick=()=>{setMode(!(adding&&!addingMsa));status(adding?'Click on the drawing to add a bubble. You can still move existing bubbles. Press Escape to finish.':'Select a bubble to edit it.');};
