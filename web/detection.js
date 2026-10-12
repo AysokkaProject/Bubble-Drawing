@@ -48,6 +48,47 @@ export function groupTextItems(items, viewport) {
   return result.sort((a,b)=>b.text.length-a.text.length);
 }
 
+export function groupLimitItems(items, viewport = null) {
+  const plainValue = /^(?:[Øø⌀Rr]\s*)?(?:\d+(?:\.\d+)?|\.\d+)(?:\s*°)?(?:\s*(?:mm|in|inch|inches|μm|µm))?$/i;
+  const values = items.map(item => {
+    const text = String(item.str ?? item.text ?? '').trim();
+    if (!plainValue.test(text)) return null;
+    let x = item.x, y = item.y, width = item.width, height = item.height;
+    if (item.transform && viewport) {
+      [x, y] = viewport.convertToViewportPoint(item.transform[4], item.transform[5]);
+      width = Math.abs(item.width * viewport.scale);
+      height = Math.max(5, item.height * viewport.scale);
+    }
+    const unit = (text.match(/(mm|in|inch|inches|μm|µm)\s*$/i) || [])[1]?.toLowerCase() || '';
+    const value = text.replace(/\s*(mm|in|inch|inches|μm|µm)\s*$/i, '').trim();
+    const match = value.match(/^([Øø⌀Rr]?\s*)((?:\d+(?:\.\d+)?|\.\d+))(°?)$/i);
+    if (!match || !/[.Øø⌀°]/.test(value) || !Number.isFinite(x) || !Number.isFinite(y)) return null;
+    return { text: text.replace(/\s+/g, ' '), x, y, width: Math.max(1, width || 1), height: Math.max(5, height || 5), symbol: match[1].trim().toUpperCase(), unit: `${match[3]}|${unit}`, numeric: Number(match[2]), confidence: item.confidence };
+  }).filter(Boolean);
+
+  const unique = [...new Map(values.map(value => [`${value.text}|${Math.round(value.x)}|${Math.round(value.y)}`, value])).values()];
+  const pairs = [];
+  for (let i = 0; i < unique.length; i++) for (let j = i + 1; j < unique.length; j++) {
+    const a = unique[i], b = unique[j];
+    if (a.numeric === b.numeric || a.symbol !== b.symbol || a.unit !== b.unit) continue;
+    const maxHeight = Math.max(a.height, b.height), dy = Math.abs(a.y - b.y);
+    const overlap = Math.max(0, Math.min(a.x + a.width, b.x + b.width) - Math.max(a.x, b.x));
+    const overlapRatio = overlap / Math.min(a.width, b.width);
+    const centerGap = Math.abs((a.x + a.width / 2) - (b.x + b.width / 2));
+    if (dy < maxHeight * .45 || dy > maxHeight * 2.8 || (overlapRatio < .5 && centerGap > maxHeight * .8)) continue;
+    pairs.push({ a, b, score: dy / maxHeight + centerGap / maxHeight });
+  }
+  pairs.sort((a, b) => a.score - b.score);
+  const used = new Set(), grouped = [];
+  for (const {a, b} of pairs) {
+    if (used.has(a) || used.has(b)) continue;
+    used.add(a); used.add(b);
+    const [low, high] = a.numeric < b.numeric ? [a, b] : [b, a];
+    grouped.push({ text: `${low.text} | ${high.text}`, x: Math.min(a.x, b.x), y: (a.y + b.y) / 2, top: Math.min(a.y - a.height, b.y - b.height), bottom: Math.max(a.y, b.y), width: Math.max(a.width, b.width), height: Math.max(a.height, b.height) * 2, ...(a.confidence !== undefined || b.confidence !== undefined ? { confidence: Math.min(a.confidence ?? 100, b.confidence ?? 100) } : {}) });
+  }
+  return grouped.sort((a, b) => b.text.length - a.text.length);
+}
+
 export function ocrLines(data) {
   const lines=[];
   for(const block of data.blocks||[]) for(const paragraph of block.paragraphs||[]) for(const line of paragraph.lines||[]) {
@@ -64,3 +105,4 @@ export function moveBubble(bubbles,id,number) {
   const i=bubbles.findIndex(b=>b.id===id);if(i<0)throw new Error('Select a bubble first.');
   const result=[...bubbles], [bubble]=result.splice(i,1);result.splice(number-1,0,bubble);return result;
 }
+
