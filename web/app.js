@@ -2,6 +2,7 @@ import * as pdfjs from './vendor/pdf.mjs';
 import { parseDimension, makeCSV, annotatePDF, makeSample } from './core.js';
 import { extractRequirement, groupTextItems, groupLimitItems, ocrLines, moveBubble, correctionKey } from './detection.js';
 import { SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY } from './supabase-config.js';
+import { makeOqcWorkbook } from './oqc-export.js';
 pdfjs.GlobalWorkerOptions.workerSrc = new URL('./vendor/pdf.worker.mjs', import.meta.url).href;
 const $ = id => document.getElementById(id);
 let pdf = null, original = null, filename = '', pageNumber = 1, viewport = null;
@@ -24,6 +25,7 @@ function controls() {
   $('next').disabled = !pdf || busy || pageNumber === pdf.numPages;
   $('undo').disabled = busy || !history.length;
   $('exportcsv').disabled = busy || !bubbles.length;
+  $('export-oqc').disabled = busy || !pdf || !bubbles.some(bubble => !bubble.msa);
   $('open').disabled = busy; $('sample').disabled = busy; $('choose').disabled = busy;
   $('editor').inert = busy;
   $('register').inert = busy;
@@ -499,6 +501,23 @@ $('print').onclick=()=>$('print-dialog').showModal();
 $('prepare-print').onclick=()=>{const percentage=Number($('print-scale').value);if(!Number.isFinite(percentage)||percentage<10||percentage>200){$('print-scale').reportValidity();return;}const win=window.open('','_blank');if(!win){status('Allow pop-ups for this site to open print preview.',true);return;}$('print-dialog').close();const pages=$('print-pages').value==='all'?Array.from({length:pdf.numPages},(_,i)=>i+1):[pageNumber];run(()=>preparePrint(win,percentage,pages));};
 $('learn').onclick=()=>{const b=current();if(!b?.reviewed||!b.rawText)return;corrections[correctionKey(b.rawText)]=Object.fromEntries(['dimension','toleranceMode','nominal','tolerance','minValue','maxValue','feature','datums','notes'].map(key=>[key,b[key]||'']));$('learning-status').textContent=`Learning: ${Object.keys(corrections).length} confirmed corrections this session.`;status('Correction remembered for matching text in future scans this session.');};
 $('exportcsv').onclick=()=>{download(makeCSV(bubbles),'text/csv;charset=utf-8',`${base()}-inspection.csv`);status('Inspection CSV downloaded.');};
+$('export-oqc').onclick=()=>{ $('oqc-template').click(); };
+$('oqc-template').onchange=()=>{
+  const template=$('oqc-template').files[0];$('oqc-template').value='';if(!template)return;
+  run(async()=>{
+    if(!/\.xlsx$/i.test(template.name))throw new Error('Choose the blank OQC Excel workbook (.xlsx).');
+    status('Preparing the OQC workbook and bubbled drawing…');
+    const pdfBytes=await annotatePDF(original,bubbles,rotations);
+    const doc=await pdfjs.getDocument({data:pdfBytes,standardFontDataUrl:new URL('./vendor/standard_fonts/',import.meta.url).href,cMapUrl:new URL('./vendor/cmaps/',import.meta.url).href,cMapPacked:true,wasmUrl:new URL('./vendor/wasm/',import.meta.url).href,isEvalSupported:false}).promise;
+    const pages=[];
+    try { for(let pno=1;pno<=doc.numPages;pno++){status(`Adding bubbled drawing page ${pno} of ${doc.numPages}…`);pages.push(await renderedExport(pno,150,doc));} }
+    finally { await doc.destroy(); }
+    const result=await makeOqcWorkbook(new Uint8Array(await template.arrayBuffer()),bubbles,pages);
+    download(result.output,'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',`${base()}-OQC-inspection-report.xlsx`);
+    const limitNote=result.missingLimits?` ${result.missingLimits} checkpoint${result.missingLimits===1?' has':'s have'} no complete limits; enter them after opening the workbook.`:'';
+    status(`OQC workbook downloaded with ${result.exportedCount} red bubble checkpoints and the bubbled drawing.${limitNote}`);
+  });
+};
 document.addEventListener('keydown',e=>{
   if(e.key==='Escape'){setMode(false);return;}
   if(e.key!=='Delete'||busy||e.isComposing||e.ctrlKey||e.altKey||e.metaKey)return;

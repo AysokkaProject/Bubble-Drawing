@@ -113,6 +113,9 @@
           <button id="exportpdf" class="primary" data-needs-doc disabled>Download bubbled PDF <span aria-hidden="true">↓</span></button>
           <div class="fields"><button id="exportimage" data-needs-doc disabled>Save image</button><button id="print" data-needs-doc disabled>Print</button></div>
           <button id="exportcsv" disabled>Download inspection CSV</button>
+          <button id="export-oqc" disabled>Export OQC Excel form</button>
+          <input id="oqc-template" type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden>
+          <p class="small muted">Choose the blank OQC workbook. The form is filled on this device and is not uploaded.</p>
           <p id="learning-status" class="small learning-status">Learning: 0 confirmed corrections this session.</p>
           <div class="saved-heading"><strong>Saved reviews</strong><button id="clear-saves" type="button">Clear</button></div>
           <div id="saved-reviews" class="saved-reviews"><span class="muted small">No saved reviews yet.</span></div>
