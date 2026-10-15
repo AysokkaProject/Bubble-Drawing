@@ -32,7 +32,7 @@ function toleranceLimits(value) {
   if (!single) return null;
   const amount = Math.abs(Number(single[3]));
   if (!Number.isFinite(amount)) return null;
-  if (single[1] && single[1].includes('+') && !single[1].includes('±') && !/\\+\\s*\\/\\s*-/.test(single[1])) {
+  if (single[1] && single[1].includes('+') && !single[1].includes('±') && !/\+\s*\/\s*-/.test(single[1])) {
     return single[2] === '-' ? { lower: amount, upper: 0 } : { lower: 0, upper: amount };
   }
   if (!single[1] && single[2] === '+') return { lower: 0, upper: amount };
