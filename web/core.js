@@ -15,9 +15,51 @@ export function csvCell(value) {
   return `"${text.replaceAll('"', '""')}"`;
 }
 
+function numericSpec(value) {
+  const match = String(value ?? '').trim().replace(/[−–]/g, '-').match(/^[Øø⌀Rr]?\s*([+-]?(?:\d+(?:\.\d*)?|\.\d+))\s*(?:mm|cm|in(?:ches)?|µm|μm|um|°)?$/i);
+  if (!match) return null;
+  const number = Number(match[1]);
+  return Number.isFinite(number) ? number : null;
+}
+
+function toleranceLimits(value) {
+  const text = String(value ?? '').trim().replace(/[−–]/g, '-').replace(/,/g, '');
+  if (!text) return null;
+  const number = '(\\d+(?:\\.\\d*)?|\\.\\d+)';
+  const asymmetric = text.match(new RegExp(`^\\s*\\+\\s*${number}\\s*\\/\\s*-\\s*${number}(?:\\s*(?:mm|cm|in(?:ches)?|µm|μm|um|°)\\s*)?$`, 'i'));
+  if (asymmetric) return { lower: Math.abs(Number(asymmetric[2])), upper: Math.abs(Number(asymmetric[1])) };
+  const single = text.match(new RegExp(`^\\s*(±|\\+\\/\\-|\\+\\s*\\/\\s*-)?\\s*([+-]?)\\s*${number}(?:\\s*(?:mm|cm|in(?:ches)?|µm|μm|um|°)\\s*)?$`, 'i'));
+  if (!single) return null;
+  const amount = Math.abs(Number(single[3]));
+  if (!Number.isFinite(amount)) return null;
+  if (single[1] && single[1].includes('+') && !single[1].includes('±') && !/\\+\\s*\\/\\s*-/.test(single[1])) {
+    return single[2] === '-' ? { lower: amount, upper: 0 } : { lower: 0, upper: amount };
+  }
+  if (!single[1] && single[2] === '+') return { lower: 0, upper: amount };
+  if (!single[1] && single[2] === '-') return { lower: amount, upper: 0 };
+  return { lower: amount, upper: amount };
+}
+
+function calculatedLimits(bubble) {
+  const parsed = parseDimension(String(bubble.dimension || ''));
+  const nominal = numericSpec(bubble.nominal) ?? numericSpec(parsed?.nominal);
+  const tolerance = toleranceLimits(bubble.tolerance || parsed?.tolerance);
+  if (nominal === null || !tolerance) return null;
+  return {
+    minimum: Number((nominal - tolerance.lower).toFixed(10)),
+    maximum: Number((nominal + tolerance.upper).toFixed(10)),
+  };
+}
+
 export function makeCSV(bubbles) {
-  const rows = [['Bubble', 'Page', 'Dimension / requirement', 'Nominal', 'Tolerance', 'Feature', 'Datums', 'Notes', 'Reviewed', 'Source', 'OCR confidence'],
-    ...bubbles.map((b, i) => [i + 1, b.page, b.dimension, b.nominal, b.tolerance, b.feature, b.datums, b.notes, b.reviewed ? 'Yes' : 'No', b.source||'Manual', b.confidence??''])];
+  const rows = [['Bubble', 'Page', 'Dimension / requirement', 'Nominal', 'Tolerance', 'Minimum', 'Maximum', 'Feature', 'Datums', 'Notes', 'Reviewed', 'Source', 'OCR confidence'],
+    ...bubbles.map((b, i) => {
+      const minMax = (b.toleranceMode || 'nominal-tolerance') === 'min-max';
+      const limits = minMax ? null : calculatedLimits(b);
+      return [i + 1, b.page, b.dimension, minMax ? '' : b.nominal, minMax ? '' : b.tolerance,
+        minMax ? b.minValue : limits?.minimum ?? '', minMax ? b.maxValue : limits?.maximum ?? '', b.feature, b.datums, b.notes,
+        b.reviewed ? 'Yes' : 'No', b.source || 'Manual', b.confidence ?? ''];
+    })];
   return '\uFEFF' + rows.map(row => row.map(csvCell).join(',')).join('\r\n') + '\r\n';
 }
 
