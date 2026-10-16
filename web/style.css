@@ -113,11 +113,13 @@ button[aria-pressed="true"] { background: #e5f2f3; border-color: #89b7ba; color:
 #review-note { flex: 1; text-align: center; color: #839095; }
 #mode { color: #5d7f77; font-size: 9px; letter-spacing: .1em; font-weight: 750; white-space: nowrap; }
 .inspector { display: flex; flex-direction: column; max-height: calc(100vh - 112px); min-height: 630px; }
+.inspector-section { min-height: 0; }
+.bubble-list-section { display: flex; flex: 0 0 260px; flex-direction: column; min-height: 190px; overflow: hidden; }
 .panel-heading { display: flex; align-items: center; justify-content: space-between; padding: 20px 19px 4px; }
 .panel-heading h2 { margin: 5px 0 0; color: var(--ink); font-size: 18px; line-height: 1.25; letter-spacing: -.035em; }
 .count { min-width: 36px; padding: 7px 9px; border: 1px solid #e6ece8; border-radius: 9px; color: #46635f; background: #f7faf7; text-align: center; font-size: 12px; font-weight: 720; font-variant-numeric: tabular-nums; }
 .panel-hint { margin: 5px 19px 12px; color: #809095; font-size: 11px; line-height: 1.5; }
-.register { flex: 0 0 205px; min-height: 90px; overflow: auto; padding: 5px 10px 11px; border-block: 1px solid #edf0ee; }
+.register { flex: 1 1 0; min-height: 0; overflow: auto; padding: 5px 10px 11px; border-block: 1px solid #edf0ee; }
 .register-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 135px; padding: 18px; color: #7e8d91; text-align: center; font-size: 11px; line-height: 1.55; }
 .register-empty strong { margin: 6px 0 2px; color: #49616a; font-size: 12px; font-weight: 680; }
 .register-empty-icon { color: #90b2a2; font-size: 25px; }
@@ -130,7 +132,7 @@ button[aria-pressed="true"] { background: #e5f2f3; border-color: #89b7ba; color:
 .register-text strong { display: block; overflow: hidden; color: #2b424a; font-size: 11px; font-weight: 650; text-overflow: ellipsis; white-space: nowrap; }
 .register-text small { display: block; margin-top: 3px; color: #89969a; font-size: 9px; }
 .review-check { color: #50896a; font-size: 12px; }
-.editor { flex: 1 1 auto; min-height: 235px; max-height: none; overflow: auto; padding: 14px 18px; border-bottom: 1px solid #edf0ee; }
+.editor { flex: 0 0 280px; min-height: 170px; max-height: none; overflow: auto; padding: 14px 18px; border-bottom: 1px solid #edf0ee; }
 .editor-heading { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; color: #354f58; font-size: 12px; }
 .danger { padding: 5px 7px; color: #bf5646; border-color: transparent; background: transparent; font-size: 10px; }
 .danger:hover:not(:disabled) { color: #a33d30; background: #fff3f0; }
@@ -140,6 +142,12 @@ button[aria-pressed="true"] { background: #e5f2f3; border-color: #89b7ba; color:
 .editor textarea { resize: vertical; }
 .fields { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .editor .fields { margin-block: 5px; }
+.tolerance-help { margin: 4px 0 8px; }
+.panel-resizer { position: relative; z-index: 1; flex: 0 0 10px; touch-action: none; cursor: row-resize; user-select: none; }
+.panel-resizer::after { position: absolute; top: 4px; right: 18px; left: 18px; height: 2px; border-radius: 2px; background: #dce5e2; content: ""; }
+.panel-resizer:hover::after, .panel-resizer:focus-visible::after, .panel-resizer.dragging::after { background: var(--blue); }
+.panel-resizer:focus-visible { outline: 2px solid #a5ce43; outline-offset: -2px; }
+#editor[hidden] + .panel-resizer { display: none; }
 .number-row { display: flex; align-items: end; gap: 7px; }
 .number-row label { flex: 1; }
 .number-row button { margin-bottom: 9px; padding: 8px; font-size: 9px; }
@@ -151,7 +159,7 @@ button[aria-pressed="true"] { background: #e5f2f3; border-color: #89b7ba; color:
 .muted { color: var(--muted); }
 #source-info { margin: 9px 0 0; color: #889397; overflow-wrap: anywhere; }
 #learn { margin: 2px 0 4px; padding: 5px 0; font-size: 10px; text-align: left; }
-.inspector-bottom { flex: 1 1 auto; min-height: 0; overflow-y: auto; }
+.inspector-bottom { flex: 1 1 auto; min-height: 180px; overflow-y: auto; }
 .exports { padding: 14px 18px 13px; }
 .section-label { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; color: #78a094; }
 .exports p { margin: 0 0 9px; color: #6d7f83; font-size: 10px; line-height: 1.5; }
@@ -242,8 +250,9 @@ dialog p { color: #718187; font-size: 12px; line-height: 1.6; }
   .panel-heading { padding: 15px 15px 3px; }
   .panel-heading h2 { font-size: 16px; }
   .panel-hint { margin: 5px 15px 10px; }
-  .register { flex-basis: 160px; max-height: 220px; }
-  .editor { min-height: 250px; padding-inline: 15px; }
+  .bubble-list-section { flex-basis: 260px; }
+  .register { max-height: 220px; }
+  .editor { min-height: 200px; padding-inline: 15px; }
   .inspector-bottom { overflow: visible; }
   .exports { padding-inline: 15px; }
   .cloud-panel { margin-inline: 10px; }

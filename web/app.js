@@ -120,6 +120,66 @@ function setToleranceFields(mode) {
   $('nominal-tolerance-fields').hidden = limits;
   $('min-max-fields').hidden = !limits;
 }
+function setupInspectorResizers() {
+  const key = 'bubble-drawing-inspector-heights-v1';
+  const minimum = { 'bubble-list-section': 190, editor: 170 };
+  try {
+    const saved = JSON.parse(localStorage.getItem(key) || '{}');
+    for (const id of Object.keys(minimum)) if (Number.isFinite(saved[id]) && saved[id] >= minimum[id]) $(id).style.flexBasis = `${Math.round(saved[id])}px`;
+  } catch {}
+  const save = id => {
+    try {
+      const values = JSON.parse(localStorage.getItem(key) || '{}');
+      values[id] = Math.round($(id).getBoundingClientRect().height);
+      localStorage.setItem(key, JSON.stringify(values));
+    } catch {}
+  };
+  for (const handle of document.querySelectorAll('.panel-resizer')) {
+    const target = $(handle.dataset.resizeTarget);
+    const min = minimum[target.id];
+    let dragResize = null;
+    const apply = height => {
+      const panel = handle.closest('.inspector');
+      const otherMinimum = [...panel.querySelectorAll('.inspector-section')].filter(section => section !== target && !section.hidden).reduce((sum, section) => sum + (minimum[section.id] || 180), 0);
+      const handles = [...panel.querySelectorAll('.panel-resizer')].filter(item => getComputedStyle(item).display !== 'none').length * 10;
+      const max = Math.max(min, panel.clientHeight - otherMinimum - handles);
+      const value = Math.max(min, Math.min(max, height));
+      target.style.flexBasis = `${value}px`;
+      handle.setAttribute('aria-valuenow', String(Math.round(value)));
+      handle.setAttribute('aria-valuetext', `${Math.round(value)} pixels`);
+      return value;
+    };
+    handle.addEventListener('pointerdown', event => {
+      if (event.button !== 0) return;
+      event.preventDefault();
+      dragResize = { pointerId: event.pointerId, startY: event.clientY, startHeight: target.getBoundingClientRect().height };
+      handle.classList.add('dragging');
+      handle.setPointerCapture(event.pointerId);
+    });
+    handle.addEventListener('pointermove', event => {
+      if (!dragResize || dragResize.pointerId !== event.pointerId) return;
+      apply(dragResize.startHeight + event.clientY - dragResize.startY);
+    });
+    const finish = event => {
+      if (!dragResize || (event && dragResize.pointerId !== event.pointerId)) return;
+      save(target.id);
+      dragResize = null;
+      handle.classList.remove('dragging');
+    };
+    handle.addEventListener('pointerup', finish);
+    handle.addEventListener('pointercancel', finish);
+    handle.addEventListener('keydown', event => {
+      if (!['ArrowUp', 'ArrowDown'].includes(event.key)) return;
+      event.preventDefault();
+      const delta = event.key === 'ArrowDown' ? 16 : -16;
+      apply(target.getBoundingClientRect().height + delta);
+      save(target.id);
+    });
+    handle.setAttribute('aria-valuemin', String(min));
+    handle.setAttribute('aria-valuenow', String(Math.round(target.getBoundingClientRect().height)));
+  }
+}
+setupInspectorResizers();
 function drawBubbles() {
   $('overlay').replaceChildren();
   if(!viewport) return;
