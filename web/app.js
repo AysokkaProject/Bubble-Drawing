@@ -1,5 +1,5 @@
 import * as pdfjs from './vendor/pdf.mjs';
-import { parseDimension, toleranceComponents, makeCSV, annotatePDF, makeSample } from './core.js';
+import { parseDimension, toleranceInputValues, makeCSV, annotatePDF, makeSample } from './core.js';
 import { extractRequirement, groupTextItems, groupLimitItems, ocrLines, moveBubble, correctionKey } from './detection.js';
 import { SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY } from './supabase-config.js';
 import { makeOqcWorkbook } from './oqc-export.js';
@@ -187,7 +187,7 @@ function refresh(paint = true, editor = true) {
     $('register').append(row);
   });
   const b=current();$('editor').hidden=!b;
-  if(b&&editor){$('selected-label').textContent=`${b.msa?'MSA attribute':'Bubble'} ${b.msa?msaLabel(b):normalLabel(b)}`;$('tolerance-mode').value=b.toleranceMode||'nominal-tolerance';setToleranceFields($('tolerance-mode').value);for(const key of ['dimension','nominal','min-value','max-value','feature','datums','notes']) $(key).value=b[key==='min-value'?'minValue':key==='max-value'?'maxValue':key]||'';const tolerances=toleranceComponents(b.tolerance);$('tolerance-upper').value=tolerances.upper;$('tolerance-lower').value=tolerances.lower;$('reviewed').checked=b.reviewed;$('moveup').disabled=bubbles.indexOf(b)===0;$('movedown').disabled=bubbles.indexOf(b)===bubbles.length-1;
+  if(b&&editor){$('selected-label').textContent=`${b.msa?'MSA attribute':'Bubble'} ${b.msa?msaLabel(b):normalLabel(b)}`;$('tolerance-mode').value=b.toleranceMode||'nominal-tolerance';setToleranceFields($('tolerance-mode').value);for(const key of ['dimension','nominal','min-value','max-value','feature','datums','notes']) $(key).value=b[key==='min-value'?'minValue':key==='max-value'?'maxValue':key]||'';const tolerances=toleranceInputValues(b.tolerance);$('tolerance').value=tolerances.symmetric;$('tolerance-upper').value=tolerances.upper;$('tolerance-lower').value=tolerances.lower;$('reviewed').checked=b.reviewed;$('moveup').disabled=bubbles.indexOf(b)===0;$('movedown').disabled=bubbles.indexOf(b)===bubbles.length-1;
     $('bubble-number').value=bubbles.indexOf(b)+1;$('bubble-number').max=bubbles.length;
     $('source-info').textContent=b.source?`${b.source}${b.confidence!==undefined?' · OCR confidence '+Math.round(b.confidence)+'%':''}${b.learned?' · Remembered correction':''} · Original: ${b.rawText||''}`:'Manually placed bubble';
     $('learn').disabled=!b.rawText||!b.reviewed;
@@ -459,9 +459,24 @@ for(const [id,key] of requirementInputs){
   $(id).addEventListener('focus',()=>{if(current())checkpoint();});
   $(id).addEventListener('input',()=>{const b=current();if(b){b[key]=$(id).value;b.reviewed=false;$('reviewed').checked=false;refresh(false,false);}});
 }
+function toleranceMagnitude(value){return value.trim().replace(/^[±+−-]+/, '');}
+function updateToleranceFromFields(b,format){
+  if(format==='symmetric'){
+    const value=toleranceMagnitude($('tolerance').value);
+    $('tolerance-upper').value='';$('tolerance-lower').value='';
+    b.tolerance=value?`±${value}`:'';
+  }else{
+    $('tolerance').value='';
+    const upper=toleranceMagnitude($('tolerance-upper').value),lower=toleranceMagnitude($('tolerance-lower').value);
+    b.tolerance=upper&&lower?`+${upper}/-${lower}`:upper?`+${upper}`:lower?`-${lower}`:'';
+  }
+  b.reviewed=false;$('reviewed').checked=false;refresh(false,false);
+}
+$('tolerance').addEventListener('focus',()=>{if(current())checkpoint();});
+$('tolerance').addEventListener('input',()=>{const b=current();if(b)updateToleranceFromFields(b,'symmetric');});
 for(const id of ['tolerance-upper','tolerance-lower']){
   $(id).addEventListener('focus',()=>{if(current())checkpoint();});
-  $(id).addEventListener('input',()=>{const b=current();if(!b)return;const magnitude=value=>value.trim().replace(/^[+−-]+/, '');const upper=magnitude($('tolerance-upper').value),lower=magnitude($('tolerance-lower').value);b.tolerance=upper&&lower?`+${upper}/-${lower}`:upper?`+${upper}`:lower?`-${lower}`:'';b.reviewed=false;$('reviewed').checked=false;refresh(false,false);});
+  $(id).addEventListener('input',()=>{const b=current();if(b)updateToleranceFromFields(b,'asymmetric');});
 }
 $('tolerance-mode').addEventListener('change',()=>{const b=current();if(!b)return;checkpoint();b.toleranceMode=$('tolerance-mode').value;b.reviewed=false;$('reviewed').checked=false;setToleranceFields(b.toleranceMode);refresh(false,false);});
 $('reviewed').onchange=()=>{const b=current();if(b){checkpoint();b.reviewed=$('reviewed').checked;refresh(false);}};

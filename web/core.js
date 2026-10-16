@@ -10,18 +10,18 @@ export function parseDimension(text) {
   return { dimension: value, nominal: match[2].trim(), tolerance: match[3]?.trim() || '', notes: match[1] ? `Quantity: ${match[1]}` : '' };
 }
 
-export function toleranceComponents(value) {
+export function toleranceInputValues(value) {
   const text = String(value ?? '').trim().replace(/[−–]/g, '-');
-  if (!text) return { upper: '', lower: '' };
+  if (!text) return { symmetric: '', upper: '', lower: '' };
   const number = '(\\d+(?:\\.\\d*)?|\\.\\d+)';
-  const asymmetric = text.match(new RegExp(`^\\+\\s*${number}(?:\\s*\\/\\s*|\\s+)-\\s*${number}(?:\\s*(?:mm|cm|in(?:ches)?|µm|μm|um|°)\\s*)?$`, 'i'));
-  if (asymmetric) return { upper: asymmetric[1], lower: asymmetric[2] };
-  const single = text.match(new RegExp(`^(±)?\\s*([+-]?)\\s*${number}(?:\\s*(?:mm|cm|in(?:ches)?|µm|μm|um|°)\\s*)?$`, 'i'));
-  if (!single) return { upper: '', lower: '' };
-  if (single[1]) return { upper: single[3], lower: single[3] };
-  if (single[2] === '+') return { upper: single[3], lower: '' };
-  if (single[2] === '-') return { upper: '', lower: single[3] };
-  return { upper: single[3], lower: single[3] };
+  const unit = '(?:\\s*(?:mm|cm|in(?:ches)?|µm|μm|um|°)\\s*)?';
+  const asymmetric = text.match(new RegExp(`^\\+\\s*${number}(?:\\s*\\/\\s*|\\s+)-\\s*${number}${unit}$`, 'i'));
+  if (asymmetric) return { symmetric: '', upper: asymmetric[1], lower: asymmetric[2] };
+  const single = text.match(new RegExp(`^(±|\\+\\/\\-|\\+\\s*\\/\\s*-)?\\s*([+-]?)\\s*${number}${unit}$`, 'i'));
+  if (!single) return { symmetric: '', upper: '', lower: '' };
+  if (single[1] || !single[2]) return { symmetric: single[3], upper: '', lower: '' };
+  if (single[2] === '+') return { symmetric: '', upper: single[3], lower: '' };
+  return { symmetric: '', upper: '', lower: single[3] };
 }
 
 export function csvCell(value) {
