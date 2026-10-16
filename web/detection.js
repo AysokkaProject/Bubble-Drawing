@@ -5,7 +5,7 @@ const featureNames = Object.values(FEATURES).sort((a,b)=>b.length-a.length);
 export const correctionKey = text => String(text).trim().replace(/\s+/g,' ').toUpperCase();
 
 export function extractRequirement(raw, corrections = {}) {
-  const text=String(raw).trim().replace(/[−–]/g,'-').replace(/\+\s*\//g,'+/').replace(/\+\s*-\s*(?=\d)/g,'±').replace(/\s+/g,' ');
+  const text=String(raw).trim().replace(/[−–]/g,'-').replace(/\+\s*\//g,'+/').replace(/\+\s*-\s*(?=\d)/g,'±').replace(/\s+/g,' ').replace(/(Ø|ø|⌀|\d)\s+(?=mm\b|cm\b|in(?:ches)?\b|µm\b|μm\b|um\b)/gi,'$1');
   if(!text || text.length>200)return null;
   const learned=corrections[correctionKey(raw)];
   if(learned)return {...learned,rawText:raw,learned:true};

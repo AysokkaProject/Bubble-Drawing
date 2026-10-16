@@ -1,243 +1,91 @@
-import { parseDimension } from './core.js';
+YªçŠx-®éÜj×¢ëiºÚ+Š§j[h‘éÜ¢éíãÍûN‹Z–‹­¦ëeŠw¬Õ¥µÁ½ÉĞìÁ…ÉÍ•¥µ•¹Í¥½¸ô™É½´€œ¸½½É”¹©Ìœì()½¹ÍĞ11}I=]L€ôl(€€¸¸¹ÉÉ…ä¹™É½´¡ì±•¹Ñ è€ÄÀô°€¡|°¥¹‘•à¤€ôø€ÄÌ€¬¥¹‘•à¤°(€€¸¸¹ÉÉ…ä¹™É½´¡ì±•¹Ñ è€ÄÀô°€¡|°¥¹‘•à¤€ôø€Ôà€¬¥¹‘•à¤°(€€¸¸¹ÉÉ…ä¹™É½´¡ì±•¹Ñ è€ÄÀô°€¡|°¥¹‘•à¤€ôø€ÄÀÌ€¬¥¹‘•à¤°(€€¸¸¹ÉÉ…ä¹™É½´¡ì±•¹Ñ è€ÄÀô°€¡|°¥¹‘•à¤€ôø€ÄĞà€¬¥¹‘•à¤°(€€¸¸¹ÉÉ…ä¹™É½´¡ì±•¹Ñ è€ÄÀô°€¡|°¥¹‘•à¤€ôø€ÄäÌ€¬¥¹‘•à¤°)tì()½¹ÍĞ9L€ôì(€‘É…İ¥¹œè€¡ÑÑÀè¼½Í¡•µ…Ì¹½Á•¹áµ±™½Éµ…ÑÌ¹½Éœ½‘É…İ¥¹µ°¼ÈÀÀØ½ÍÁÉ•…‘Í¡••ÑÉ…İ¥¹œœ°(€¥µ…”è€¡ÑÑÀè¼½Í¡•µ…Ì¹½Á•¹áµ±™½Éµ…ÑÌ¹½Éœ½‘É…İ¥¹µ°¼ÈÀÀØ½µ…¥¸œ°(€½™™¥•I•°è€¡ÑÑÀè¼½Í¡•µ…Ì¹½Á•¹áµ±™½Éµ…ÑÌ¹½Éœ½½™™¥•½Õµ•¹Ğ¼ÈÀÀØ½É•±…Ñ¥½¹Í¡¥ÁÌœ°(€Á…­…•I•°è€¡ÑÑÀè¼½Í¡•µ…Ì¹½Á•¹áµ±™½Éµ…ÑÌ¹½Éœ½Á…­…”¼ÈÀÀØ½É•±…Ñ¥½¹Í¡¥ÁÌœ°)ôì()™Õ¹Ñ¥½¸áµ±Í…Á”¡Ù…±Õ”¤ì(€É•ÑÕÉ¸MÑÉ¥¹œ¡Ù…±Õ”¤¹É•Á±…•±° œ˜œ°€œ™…µÀìœ¤¹É•Á±…•±° œğœ°€œ™±Ğìœ¤¹É•Á±…•±° œøœ°€œ™Ğìœ¤¹É•Á±…•±° œˆœ°€œ™ÅÕ½Ğìœ¤¹É•Á±…•±° ˆœˆ°€œ™…Á½Ììœ¤ì)ô()™Õ¹Ñ¥½¸…ÑÑÉÌ¡Ñ…œ¤ì(€É•ÑÕÉ¸=‰©•Ğ¹™É½µ¹ÑÉ¥•Ì¡l¸¸¹Ñ…œ¹µ…Ñ¡±° ¼¡mqÜè¸µt¬¤ôˆ¡mx‰t¨¤ˆ½œ¥t¹µ…À¡µ…Ñ €ôømµ…Ñ¡lÅt°µ…Ñ¡lÉut¤¤ì)ô()™Õ¹Ñ¥½¸İ½É­Í¡••ÑA…Ñ ¡İ½É­‰½½­aµ°°É•±…Ñ¥½¹Í¡¥ÁÍaµ°°Í¡••Ñ9…µ”¤ì(€½¹ÍĞÍ¡••Ğ€ôl¸¸¹İ½É­‰½½­aµ°¹µ…Ñ¡±° ¼ñÍ¡••Ñq‰mxùt©p¼ıqÌ¨ø½œ¥t¹µ…À¡µ…Ñ €ôø…ÑÑÉÌ¡µ…Ñ¡lÁt¤¤¹™¥¹¡¥Ñ•´€ôø¥Ñ•´¹¹…µ”€ôôôÍ¡••Ñ9…µ”¤ì(€¥˜€ …Í¡••Ğü¹lÈé¥t¤Ñ¡É½Ü¹•ÜÉÉ½È¡Q¡”Í•±•Ñ•İ½É­‰½½¬¥Ìµ¥ÍÍ¥¹œÑ¡”€‘íÍ¡••Ñ9…µ•ôÍ¡••Ğ¹€¤ì(€½¹ÍĞÉ•±…Ñ¥½¸€ôl¸¸¹É•±…Ñ¥½¹Í¡¥ÁÍaµ°¹µ…Ñ¡±° ¼ñI•±…Ñ¥½¹Í¡¥Áq‰mxùt©p¼ıqÌ¨ø½œ¥t¹µ…À¡µ…Ñ €ôø…ÑÑÉÌ¡µ…Ñ¡lÁt¤¤¹™¥¹¡¥Ñ•´€ôø¥Ñ•´¹%€ôôôÍ¡••ÑlÈé¥t¤ì(€¥˜€ …É•±…Ñ¥½¸ü¹Q…É•Ğ¤Ñ¡É½Ü¹•ÜÉÉ½È¡½Õ±¹½Ğ±½…Ñ”Ñ¡”€‘íÍ¡••Ñ9…µ•ôÍ¡••Ğ¥¸Ñ¡”İ½É­‰½½¬¹€¤ì(€É•ÑÕÉ¸‘•½‘•UI%½µÁ½¹•¹Ğ¡¹•ÜUI0¡É•±…Ñ¥½¸¹Q…É•Ğ°€¡ÑÑÁÌè¼½á±Íà¹±½…°½á°½İ½É­‰½½¬¹áµ°œ¤¹Á…Ñ¡¹…µ”¹Í±¥” Ä¤¤ì)ô()™Õ¹Ñ¥½¸•±±A…ÑÑ•É¸¡É•™•É•¹”¤ì(€É•ÑÕÉ¸¹•ÜI•áÀ¡€ñqqˆ üõmxùt©qq‰Èôˆ‘íÉ•™•É•¹•ôˆ¥mxùt¨ üéqp¼ùğùmqqÍqqMt¨üñqp½Œø¥€¤ì)ô()™Õ¹Ñ¥½¸İÉ¥Ñ•MÑÉ¥¹•±°¡áµ°°É•™•É•¹”°Ù…±Õ”¤ì(€½¹ÍĞµ…Ñ €ôáµ°¹µ…Ñ ¡•±±A…ÑÑ•É¸¡É•™•É•¹”¤¤ì(€¥˜€ …µ…Ñ ¤Ñ¡É½Ü¹•ÜÉÉ½È¡Q¡”¡•¬A½¥¹Ğ•±°€‘íÉ•™•É•¹•ô¥Ìµ¥ÍÍ¥¹œ™É½´Ñ¡”Í•±•Ñ•Ñ•µÁ±…Ñ”¹€¤ì(€±•Ğ½Á•¹¥¹œ€ôµ…Ñ¡lÁt¹Í±¥” À°µ…Ñ¡lÁt¹¥¹‘•á=˜ œøœ¤€¬€Ä¤ì(€¥˜€¡½Á•¹¥¹œ¹•¹‘Í]¥Ñ  œ¼øœ¤¤½Á•¹¥¹œ€ô½Á•¹¥¹œ¹Í±¥” À°€´È¤€¬€œøœì(€½Á•¹¥¹œ€ô½Á•¹¥¹œ¹É•Á±…” ½qÌ­Ğô‰mx‰t¨ˆ¼°€œœ¤€¬€œĞô‰¥¹±¥¹•MÑÈˆœì(€½¹ÍĞÉ•Á±…•µ•¹Ğ€ô€‘í½Á•¹¥¹ôñ¥ÌøñĞø‘íáµ±Í…Á”¡Ù…±Õ”¥ôğ½Ğøğ½¥Ìøğ½Œù€ì(€É•ÑÕÉ¸áµ°¹É•Á±…”¡µ…Ñ¡lÁt°É•Á±…•µ•¹Ğ¤ì)ô()™Õ¹Ñ¥½¸İÉ¥Ñ•9Õµ‰•É•±°¡áµ°°É•™•É•¹”°Ù…±Õ”¤ì(€½¹ÍĞµ…Ñ €ôáµ°¹µ…Ñ ¡•±±A…ÑÑ•É¸¡É•™•É•¹”¤¤ì(€¥˜€ …µ…Ñ ¤Ñ¡É½Ü¹•ÜÉÉ½È¡Q¡”5¥¸½5…à•±°€‘íÉ•™•É•¹•ô¥Ìµ¥ÍÍ¥¹œ™É½´Ñ¡”Í•±•Ñ•Ñ•µÁ±…Ñ”¹€¤ì(€±•Ğ½Á•¹¥¹œ€ôµ…Ñ¡lÁt¹Í±¥” À°µ…Ñ¡lÁt¹¥¹‘•á=˜ œøœ¤€¬€Ä¤ì(€¥˜€¡½Á•¹¥¹œ¹•¹‘Í]¥Ñ  œ¼øœ¤¤½Á•¹¥¹œ€ô½Á•¹¥¹œ¹Í±¥” À°€´È¤€¬€œøœì(€½Á•¹¥¹œ€ô½Á•¹¥¹œ¹É•Á±…” ½qÌ­Ğô‰mx‰t¨ˆ¼°€œœ¤ì(€É•ÑÕÉ¸áµ°¹É•Á±…”¡µ…Ñ¡lÁt°€‘í½Á•¹¥¹ôñØø‘íáµ±Í…Á”¡Ù…±Õ”¥ôğ½Øøğ½Œù€¤ì)ô()™Õ¹Ñ¥½¸İÉ¥Ñ•½ÉµÕ±……¡”¡áµ°°É•™•É•¹”°Ù…±Õ”¤ì(€½¹ÍĞµ…Ñ €ôáµ°¹µ…Ñ ¡•±±A…ÑÑ•É¸¡É•™•É•¹”¤¤ì(€¥˜€ …µ…Ñ ¤É•ÑÕÉ¸áµ°ì(€±•ĞÉ•Á±…•µ•¹Ğ€ôµ…Ñ¡lÁt¹É•Á±…” ½qÌ­Ğô‰mx‰t¨ˆ¼°€œœ¤ì(€É•Á±…•µ•¹Ğ€ôÉ•Á±…•µ•¹Ğ¹É•Á±…” ¼ñØùmqÍqMt¨üñp½Øø¼°€ñØø‘íáµ±Í…Á”¡Ù…±Õ”¥ôğ½Øù€¤ì(€É•ÑÕÉ¸áµ°¹É•Á±…”¡µ…Ñ¡lÁt°É•Á±…•µ•¹Ğ¤ì)ô()™Õ¹Ñ¥½¸¹Õµ‰•ÉY…±Õ”¡Ù…±Õ”¤ì(€½¹ÍĞÑ•áĞ€ôMÑÉ¥¹œ¡Ù…±Õ”€üü€œœ¤¹ÑÉ¥´ ¤¹É•Á±…” ½oŠ"KŠMt½œ°€œ´œ¤ì(€½¹ÍĞµ…Ñ €ôÑ•áĞ¹µ…Ñ  ½yqÌ¨ üéocãŠ2IÉuqÌ¨¤ü¡l¬µtü üéq¬ üép¹q¨¤ıñp¹q¬¤¥qÌ¨ üè üéµµñµñ¥¸ üé¡•Ì¤ıó
+Õµó:ñµñÕµñ‘•œ üéÉ••Ì¤ıó
+Áğ”¥qÌ¨¤ü½¤¤ì(€¥˜€ …µ…Ñ ¤É•ÑÕÉ¸¹Õ±°ì(€½¹ÍĞ¹Õµ‰•È€ô9Õµ‰•È¡µ…Ñ¡lÅt¤ì(€É•ÑÕÉ¸9Õµ‰•È¹¥Í¥¹¥Ñ”¡¹Õµ‰•È¤€ü¹Õµ‰•È€è¹Õ±°ì)ô()™Õ¹Ñ¥½¸Ñ½±•É…¹•	½Õ¹‘Ì¡Ñ½±•É…¹”¤ì(€½¹ÍĞÑ•áĞ€ôMÑÉ¥¹œ¡Ñ½±•É…¹”€üü€œœ¤¹ÑÉ¥´ ¤¹É•Á±…” ½oŠ"KŠMt½œ°€œ´œ¤¹É•Á±…” ¼°½œ°€œœ¤ì(€¥˜€ …Ñ•áĞ¤É•ÑÕÉ¸¹Õ±°ì(€½¹ÍĞ¹Õµ•É¥Œ€ô€œ¡qq¬ üéqp¹qq¨¤ıñqp¹qq¬¤œì(€½¹ÍĞ…Íåµµ•ÑÉ¥Œ€ôÑ•áĞ¹µ…Ñ ¡¹•ÜI•áÀ¡yqqÌ©qp­qqÌ¨‘í¹Õµ•É¥ô üéqqÌ©qp½qqÌ©ñqqÌ¬¤µqqÌ¨‘í¹Õµ•É¥ô üéqqÌ¨ üéµµñµñ¥¸ üé¡•Ì¤ıó
+Õµó:ñµñÕµó
+À¥qqÌ¨¤ü‘€°€¤œ¤¤ì(€¥˜€¡…Íåµµ•ÑÉ¥Œ¤É•ÑÕÉ¸ì±½İ•Èè5…Ñ ¹…‰Ì¡9Õµ‰•È¡…Íåµµ•ÑÉ¥lÉt¤¤°ÕÁÁ•Èè5…Ñ ¹…‰Ì¡9Õµ‰•È¡…Íåµµ•ÑÉ¥lÅt¤¤ôì(€½¹ÍĞÍ¥¹±”€ôÑ•áĞ¹µ…Ñ ¡¹•ÜI•áÀ¡yqqÌ¨£
+Åñqp­qp½qpµñqp­qqÌ©qp½qqÌ¨´¤ıqqÌ¨¡l¬µtü¥qqÌ¨‘í¹Õµ•É¥ô üéqqÌ¨ üéµµñµñ¥¸ üé¡•Ì¤ıó
+Õµó:ñµñÕµó
+À¥qqÌ¨¤ü‘€°€¤œ¤¤ì(€¥˜€ …Í¥¹±”¤É•ÑÕÉ¸¹Õ±°ì(€½¹ÍĞ…µ½Õ¹Ğ€ô5…Ñ ¹…‰Ì¡9Õµ‰•È¡Í¥¹±•lÍt¤¤ì(€¥˜€ …9Õµ‰•È¹¥Í¥¹¥Ñ”¡…µ½Õ¹Ğ¤¤É•ÑÕÉ¸¹Õ±°ì(€¥˜€¡Í¥¹±•lÅt€˜˜Í¥¹±•lÅt¹¥¹±Õ‘•Ì œ¬œ¤€˜˜€…Í¥¹±•lÅt¹¥¹±Õ‘•Ì Ÿ
+Äœ¤€˜˜€„½p­qÌ©p½qÌ¨´¼¹Ñ•ÍĞ¡Í¥¹±•lÅt¤¤ì(€€€É•ÑÕÉ¸Í¥¹±•lÉt€ôôô€œ´œ€üì±½İ•Èè…µ½Õ¹Ğ°ÕÁÁ•Èè€Àô€èì±½İ•Èè€À°ÕÁÁ•Èè…µ½Õ¹Ğôì(€ô(€¥˜€ …Í¥¹±•lÅt€˜˜Í¥¹±•lÉt€ôôô€œ¬œ¤É•ÑÕÉ¸ì±½İ•Èè€À°ÕÁÁ•Èè…µ½Õ¹Ğôì(€¥˜€ …Í¥¹±•lÅt€˜˜Í¥¹±•lÉt€ôôô€œ´œ¤É•ÑÕÉ¸ì±½İ•Èè…µ½Õ¹Ğ°ÕÁÁ•Èè€Àôì(€É•ÑÕÉ¸ì±½İ•Èè…µ½Õ¹Ğ°ÕÁÁ•Èè…µ½Õ¹Ğôì)ô()™Õ¹Ñ¥½¸±¥µ¥ÑÍ½È¡‰Õ‰‰±”¤ì(€¥˜€ ¡‰Õ‰‰±”¹Ñ½±•É…¹•5½‘”ñğ€¹½µ¥¹…°µÑ½±•É…¹”œ¤€ôôô€µ¥¸µµ…àœ¤ì(€€€½¹ÍĞµ¥¸€ô¹Õµ‰•ÉY…±Õ”¡‰Õ‰‰±”¹µ¥¹Y…±Õ”¤°µ…à€ô¹Õµ‰•ÉY…±Õ”¡‰Õ‰‰±”¹µ…áY…±Õ”¤ì(€€€É•ÑÕÉ¸µ¥¸€„ôô¹Õ±°€˜˜µ…à€„ôô¹Õ±°€üìµ¥¸°µ…à°¹½µ¥¹…°è9Õµ‰•È  ¡µ¥¸€¬µ…à¤€¼€È¤¹Ñ½¥á• ÄÀ¤¤ô€è¹Õ±°ì(€ô(€½¹ÍĞÁ…ÉÍ•€ôÁ…ÉÍ•¥µ•¹Í¥½¸¡MÑÉ¥¹œ¡‰Õ‰‰±”¹‘¥µ•¹Í¥½¸ñğ€œœ¤¤ì(€½¹ÍĞ¹½µ¥¹…°€ô¹Õµ‰•ÉY…±Õ”¡‰Õ‰‰±”¹¹½µ¥¹…°¤€üü¹Õµ‰•ÉY…±Õ”¡Á…ÉÍ•ü¹¹½µ¥¹…°¤ì(€½¹ÍĞ‰½Õ¹‘Ì€ôÑ½±•É…¹•	½Õ¹‘Ì¡‰Õ‰‰±”¹Ñ½±•É…¹”ñğÁ…ÉÍ•ü¹Ñ½±•É…¹”¤ì(€¥˜€¡¹½µ¥¹…°€ôôô¹Õ±°ñğ€…‰½Õ¹‘Ì¤É•ÑÕÉ¸¹Õ±°ì(€É•ÑÕÉ¸ìµ¥¸è9Õµ‰•È ¡¹½µ¥¹…°€´‰½Õ¹‘Ì¹±½İ•È¤¹Ñ½¥á• ÄÀ¤¤°µ…àè9Õµ‰•È ¡¹½µ¥¹…°€¬‰½Õ¹‘Ì¹ÕÁÁ•È¤¹Ñ½¥á• ÄÀ¤¤°¹½µ¥¹…°ôì)ô()™Õ¹Ñ¥½¸É•±…Ñ¥½¹Í¡¥ÁQ…É•Ğ¡Á…Ñ °Ñ…É•Ğ¤ì(€½¹ÍĞÁ…ÉÑÌ€ôÁ…Ñ ¹ÍÁ±¥Ğ œ¼œ¤ì(€Á…ÉÑÌ¹Á½À ¤ì(€™½È€¡½¹ÍĞÁ…ÉĞ½˜Ñ…É•Ğ¹ÍÁ±¥Ğ œ¼œ¤¤ì(€€€¥˜€ …Á…ÉĞñğÁ…ÉĞ€ôôô€œ¸œ¤½¹Ñ¥¹Õ”ì(€€€¥˜€¡Á…ÉĞ€ôôô€œ¸¸œ¤Á…ÉÑÌ¹Á½À ¤ì(€€€•±Í”Á…ÉÑÌ¹ÁÕÍ ¡Á…ÉĞ¤ì(€ô(€É•ÑÕÉ¸Á…ÉÑÌ¹©½¥¸ œ¼œ¤ì)ô()™Õ¹Ñ¥½¸É•±…Ñ¥Ù•Q…É•Ğ¡™É½µ¥±•A…Ñ °Ñ½¥±•A…Ñ ¤ì(€½¹ÍĞ™É½´€ô™É½µ¥±•A…Ñ ¹ÍÁ±¥Ğ œ¼œ¤ì(€™É½´¹Á½À ¤ì(€½¹ÍĞÑ¼€ôÑ½¥±•A…Ñ ¹ÍÁ±¥Ğ œ¼œ¤ì(€İ¡¥±”€¡™É½´¹±•¹Ñ €˜˜Ñ¼¹±•¹Ñ €˜˜™É½µlÁt€ôôôÑ½lÁt¤ì™É½´¹Í¡¥™Ğ ¤ìÑ¼¹Í¡¥™Ğ ¤ìô(€É•ÑÕÉ¸l¸¸¹™É½´¹µ…À  ¤€ôø€œ¸¸œ¤°€¸¸¹Ñ½t¹©½¥¸ œ¼œ¤ì)ô()™Õ¹Ñ¥½¸‘É…İ¥¹É•…ÍÁ•Ğ¡áµ°¤ì(€½¹ÍĞ™½Éµ…Ğ€ôáµ°¹µ…Ñ  ¼ñÍ¡••Ñ½Éµ…ÑAÉq‰mxùt¨ø¼¤ü¹lÁtñğ€œœì(€½¹ÍĞ‘•™…Õ±Ñ]¥‘Ñ €ô9Õµ‰—Íû¶‰ËkºwµçJNÂŸB‚™[˜İ[Ûˆ˜]Ú[™Ö[
 
-const CELL_ROWS = [
-  ...Array.from({ length: 10 }, (_, index) => 13 + index),
-  ...Array.from({ length: 10 }, (_, index) => 58 + index),
-  ...Array.from({ length: 10 }, (_, index) => 103 + index),
-  ...Array.from({ length: 10 }, (_, index) => 148 + index),
-  ...Array.from({ length: 10 }, (_, index) => 193 + index),
-];
+HÂˆ™]\›ˆŞ[™\œÚ[ÛHŒKŒˆ[˜ÛÙ[™ÏH•U‹Nˆİ[™[Û™OHY\ÈÏ—ÜÑˆ[œÎH‰Ó”Ë™˜]Ú[™ßHˆ[œÎ˜OH‰Ó”Ëš[XYÙ_Hˆ[œÎœH‰Ó”Ë›Ù™šXÙT™[HÛĞÙ[[˜ÚÜˆY]\ÏH›Û™PÙ[™œ›ÛO˜ÛÛŒŞ˜ÛÛ˜ÛÛÙ™ŒŞ˜ÛÛÙ™œ›İÏŒŞœ›İÏœ›İÓÙ™ŒŞœ›İÓÙ™Ş™œ›ÛOÏ˜ÛÛŒMÏŞ˜ÛÛ˜ÛÛÙ™ŒŞ˜ÛÛÙ™œ›İÏOŞœ›İÏœ›İÓÙ™ŒŞœ›İÓÙ™ŞÏœXÏ›”XÔ˜Ó”ˆYHŒHˆ˜[YOH‘š[š\ÚYX˜›Y˜]Ú[™È‹Ï˜Ó”XÔNœXÓØÚÜÈ›ĞÚ[™ÙP\ÜXİHŒH‹ÏŞ˜Ó”XÔŞ›”XÔ˜›\š[N˜›\™[X™YHœ’YH‹ÏNœİ™]ÚN™š[™XİÏØNœİ™]ÚŞ˜›\š[œÜNœ›ON›Ù™ˆHŒˆOHŒ‹ÏN™^ŞHŒˆŞOHŒ‹ÏØNœ›ONœœİÙ[ÛHœİHœ™XİN˜]“İÏØNœœİÙ[ÛOŞœÜŞœXÏ˜ÛY[]KÏŞÛĞÙ[[˜ÚÜŞÜÑ˜ÂŸB‚™[˜İ[ÛˆY˜]Ú[™Ô™[][ÛœÚ\
+[™[][ÛœÚ\Y
+HÂˆÛÛœİ˜]Ú[™ÕYÈH˜]Ú[™ÈšYH‰Ş[\ØØ\J™[][ÛœÚ\Y
+_H‹Ï˜ÂˆYˆ
+Ï˜]Ú[™×‹Ë\İ
+[
+JH›İÈ™]È\œ›ÜŠ	ÕHÙ[XİY[\]H[™XYH\ÈH˜]Ú[™ÈÛˆ]È•ÈÚY]‰ÊNÂˆÛÛœİ^[œÚ[ÛˆH[œÙX\˜Ú
+Ï^İ‹ÊNÂˆYˆ
+^[œÚ[ÛˆH
+H™]\›ˆ[œÛXÙJ^[œÚ[ÛŠH
+È˜]Ú[™ÕYÈ
+È[œÛXÙJ^[œÚ[ÛŠNÂˆ™]\›ˆ[œ™\XÙJ	ÏİÛÜšÜÚY]‰Ë	Ù˜]Ú[™ÕYßOİÛÜšÜÚY]˜
+NÂŸB‚™[˜İ[ÛˆYÛÛ[\J[˜]Ú[™Ó˜[YJHÂˆYˆ
+KÑ^[œÚ[ÛHœ™È‹Ë\İ
+[
+JH[H[œ™\XÙJ	ÏÕ\\Ï‰Ë	ÏY˜][^[œÚ[ÛHœ™ÈˆÛÛ[\OHš[XYÙKÜ™È‹ÏÕ\\Ï‰ÊNÂˆÛÛœİ\˜[YHHŞÙ˜]Ú[™ÜËÉÙ˜]Ú[™Ó˜[Y_K[ÂˆYˆ
+^[š[˜ÛY\Ê\˜[YOH‰Ü\˜[Y_H˜
+JH[H[œ™\XÙJ	ÏÕ\\Ï‰Ëİ™\œšYH\˜[YOH‰Ü\˜[Y_HˆÛÛ[\OH˜\XØ][Û‹İ›™›Ü[[›Ü›X]Ë[Ù™šXÙYØİ[Y[™˜]Ú[™ÊŞ[‹ÏÕ\\Ï˜
+NÂˆ™]\›ˆ[ÂŸB‚™^Ü\Ş[˜È[˜İ[ÛˆXZÙSÜXÕÛÜšØ›ÛÚÊ[\]P]\ËX˜›\Ë˜]Ú[™ÔYÙ\ÊHÂˆÛÛœİš\H]ØZ]Ú[™İË’”Öš\›ØY\Ş[˜Ê[\]P]\ÊNÂˆÛÛœİÛÜšØ›ÛÚÖ[H]ØZ]š\™š[J	ŞİÛÜšØ›ÛÚË[	ÊOË˜\Ş[˜Ê	Üİš[™ÉÊNÂˆÛÛœİÛÜšØ›ÛÚÔ™[ÈH]ØZ]š\™š[J	Ş×Ü™[ËİÛÜšØ›ÛÚË[œ™[ÉÊOË˜\Ş[˜Ê	Üİš[™ÉÊNÂˆYˆ
+]ÛÜšØ›ÛÚÖ[]ÛÜšØ›ÛÚÔ™[ÊH›İÈ™]È\œ›ÜŠ	ÕHÙ[XİYš[H\È›İH™XYX›H^Ù[ÛÜšØ›ÛÚË‰ÊNÂˆÛÛœİ™\Ü]HÛÜšÜÚY]]
+ÛÜšØ›ÛÚÖ[ÛÜšØ›ÛÚÔ™[Ë	ÓÔPÒT‰ÊNÂˆÛÛœİ˜]Ú[™Ô]HÛÜšÜÚY]]
+ÛÜšØ›ÛÚÖ[ÛÜšØ›ÛÚÔ™[Ë	Ñ•ÉÊNÂˆ]™\Ü[H]ØZ]š\™š[J™\Ü]
+OË˜\Ş[˜Ê	Üİš[™ÉÊNÂˆ]˜]Ú[™ÔÚY][H]ØZ]š\™š[J˜]Ú[™Ô]
+OË˜\Ş[˜Ê	Üİš[™ÉÊNÂˆ]ÛÛ[\\ÈH]ØZ]š\™š[J	ÖĞÛÛ[Õ\\×K[	ÊOË˜\Ş[˜Ê	Üİš[™ÉÊNÂˆYˆ
+\™\Ü[Y˜]Ú[™ÔÚY][XÛÛ[\\ÊH›İÈ™]È\œ›ÜŠ	ÕHÙ[XİYÛÜšØ›ÛÚÈÙ\È›İX]ÚHÔPÈ™\Ü[\]K‰ÊNÂˆYˆ
+KÏY\™ÙPÙ[–×—Jœ™YHLN”MH‹Ë\İ
+˜]Ú[™ÔÚY][
+JH›İÈ™]È\œ›ÜŠ	ÕH•ÈÚY]Ù\È›İ]™HH^XİY˜]Ú[™È\™XHLN”MK‰ÊNÂ‚ˆÛÛœİ›Ü›X[X˜›\ÈHX˜›\Ë™š[\ŠX˜›HOˆXX˜›K›\ØJNÂˆYˆ
+›Ü›X[X˜›\Ë›[™İˆÑSÔ“ÕÔË›[™İ
+H›İÈ™]È\œ›ÜŠ	Õ\ÈÔPÈ›Ü›H\È›ÛÛH›ÜˆL™YX˜›HÚXÚÜÚ[Ë‰ÊNÂˆ]Z\ÜÚ[™Ó[Z]ÈHÂˆ›Ü›X[X˜›\Ë™›Ü‘XXÚ
 
-const NS = {
-  drawing: 'http://schemas.openxmlformats.org/drawingml/2006/spreadsheetDrawing',
-  image: 'http://schemas.openxmlformats.org/drawingml/2006/main',
-  officeRel: 'http://schemas.openxmlformats.org/officeDocument/2006/relationships',
-  packageRel: 'http://schemas.openxmlformats.org/package/2006/relationships',
-};
+X˜›K[™^
+HOˆÂˆÛÛœİ›İÈHÑSÔ“ÕÔÖÚ[™^NÂˆ™\Ü[HÜš]Tİš[™ĞÙ[
+™\Ü[IÜ›İßXİš[™Ê[™^
+ÈJJNÂˆÛÛœİ[Z]ÈH[Z]Ñ›ÜŠX˜›JNÂˆYˆ
+[[Z]ÊHÈZ\ÜÚ[™Ó[Z]ÊÊÎÈ™]\›ÈBˆ™\Ü[HÜš]S[X™\Ù[
+™\Ü[	Ü›İßX[Z]Ë›Z[ŠNÂˆ™\Ü[HÜš]S[X™\Ù[
+™\Ü[‰Ü›İßX[Z]Ë›X^
+NÂˆ™\Ü[HÜš]Q›Ü›][PØXÚJ™\Ü[IÜ›İßX[Z]Ë››ÛZ[˜[
+NÂˆJNÂ‚ˆÛÛœİ˜]Ú[™Ô™[Ñš[T]H	Ù˜]Ú[™Ô]œÛXÙJ˜]Ú[™Ô]›\İ[™^ÙŠ	ËÉÊJ_K×Ü™[ËÉÙ˜]Ú[™Ô]œÛXÙJ˜]Ú[™Ô]›\İ[™^ÙŠ	ËÉÊH
+ÈJ_Kœ™[ØÂˆÛÛœİ˜]Ú[™Ô™[Ö[H]ØZ]š\™š[J˜]Ú[™Ô™[Ñš[T]
+OË˜\Ş[˜Ê	Üİš[™ÉÊHŞ[™\œÚ[ÛHŒKŒˆ[˜ÛÙ[™ÏH•U‹Nˆİ[™[Û™OHY\ÈÏ™[][ÛœÚ\È[œÏH‰Ó”ËœXÚØYÙT™[H‹Ï˜ÂˆÛÛœİ^\İ[™Ñ˜]Ú[™ÈHË‹‹™˜]Ú[™Ô™[Ö[›X]Ú[
+Ï™[][ÛœÚ\–×—J—Ï×Ê‹ÙÊWK›X\
+X]ÚOˆ]œÊX]ÚÌJJK™š[™
+][HOˆ][K•\OË™[™ÕÚ]
+	ËÙ˜]Ú[™ÉÊJNÂˆYˆ
+^\İ[™Ñ˜]Ú[™ÊH›İÈ™]È\œ›ÜŠ	ÕHÙ[XİY[\]H[™XYH\ÈH˜]Ú[™ÈÛˆ]È•ÈÚY]‰ÊNÂˆÛÛœİ\ÙYYÈH™]ÈÙ]
+Ë‹‹™˜]Ú[™Ô™[Ö[›X]Ú[
+Ï™[][ÛœÚ\–×—J—Ï×Ê‹ÙÊWK›X\
+X]ÚOˆ]œÊX]ÚÌJK’Y
+JNÂˆ]ÚY]™[[™^HNÂˆÚ[H
+\ÙYYËš\Ê’Y	ÜÚY]™[[™^X
+JHÚY]™[[™^
+ÊÎÂˆÛÛœİÚY]™[YH’Y	ÜÚY]™[[™^XÂˆÛÛœİ˜]Ú[™Ó˜[YHH
 
-function xmlEscape(value) {
-  return String(value).replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&apos;');
-}
 
-function attrs(tag) {
-  return Object.fromEntries([...tag.matchAll(/([\w:.-]+)="([^"]*)"/g)].map(match => [match[1], match[2]]));
-}
+HOˆÈ][™^HNÈÚ[H
+š\™š[JÙ˜]Ú[™ÜËÙ˜]Ú[™ÉÚ[™^K[
+JH[™^
+ÊÎÈ™]\›ˆ˜]Ú[™ÉÚ[™^XÈJJ
+NÂˆÛÛœİ[XYÙS˜[YHH
 
-function worksheetPath(workbookXml, relationshipsXml, sheetName) {
-  const sheet = [...workbookXml.matchAll(/<sheet\b[^>]*\/?\s*>/g)].map(match => attrs(match[0])).find(item => item.name === sheetName);
-  if (!sheet?.['r:id']) throw new Error(`The selected workbook is missing the ${sheetName} sheet.`);
-  const relation = [...relationshipsXml.matchAll(/<Relationship\b[^>]*\/?\s*>/g)].map(match => attrs(match[0])).find(item => item.Id === sheet['r:id']);
-  if (!relation?.Target) throw new Error(`Could not locate the ${sheetName} sheet in the workbook.`);
-  return decodeURIComponent(new URL(relation.Target, 'https://xlsx.local/xl/workbook.xml').pathname.slice(1));
-}
 
-function cellPattern(reference) {
-  return new RegExp(`<c\\b(?=[^>]*\\br="${reference}")[^>]*(?:\\/>|>[\\s\\S]*?<\\/c>)`);
-}
+HOˆÈ][™^HNÈÚ[H
+š\™š[JÛYYXKÚ[XYÙIÚ[™^Kœ™Ø
+JH[™^
+ÊÎÈ™]\›ˆ[XYÙIÚ[™^Kœ™ØÈJJ
+NÂˆÛÛœİ˜]Ú[™Ô™[YH	Ü’YIÎÂˆÛÛœİXİ\™HH]ØZ]˜]Ú[™Ô‘Ê˜]Ú[™ÔYÙ\Ë˜]Ú[™Ğ\™XP\ÜXİ
+˜]Ú[™ÔÚY][
+JNÂˆ˜]Ú[™ÔÚY][HY˜]Ú[™Ô™[][ÛœÚ\
+˜]Ú[™ÔÚY][ÚY]™[Y
+NÂˆÛÛœİ˜]Ú[™ÔXÚØYÙT]HÙ˜]Ú[™ÜËÉÙ˜]Ú[™Ó˜[Y_K[ÂˆÛÛœİ™[]]™Q˜]Ú[™Ô]H™[]]™U\™Ù]
+˜]Ú[™Ô]˜]Ú[™ÔXÚØYÙT]
+NÂˆÛÛœİÛÜœ™XİY™[ÈH˜]Ú[™Ô™[Ö[œ™\XÙJ	ÏÔ™[][ÛœÚ\Ï‰Ë™[][ÛœÚ\YH‰ÜÚY]™[YHˆ\OHš‹ËÜØÚ[X\Ë›Ü[[›Ü›X]Ë›Ü™ËÛÙ™šXÙQØİ[Y[ÌŒ‹Ü™[][ÛœÚ\ËÙ˜]Ú[™Èˆ\™Ù]H‰Ş[\ØØ\J™[]]™Q˜]Ú[™Ô]
+_H‹ÏÔ™[][ÛœÚ\Ï˜
+NÂˆÛÛœİ˜]Ú[™Ô™[Ô]HÙ˜]Ú[™ÜË×Ü™[ËÉÙ˜]Ú[™Ó˜[Y_K[œ™[ØÂˆš\™š[J™\Ü]™\Ü[
+NÂˆš\™š[J˜]Ú[™Ô]˜]Ú[™ÔÚY][
+NÂˆš\™š[J˜]Ú[™Ô™[Ñš[T]ÛÜœ™XİY™[ÊNÂˆš\™š[J˜]Ú[™Ô™[Ô]Ş[™\œÚ[ÛHŒKŒˆ[˜ÛÙ[™ÏH•U‹Nˆİ[™[Û™OHY\ÈÏ™[][ÛœÚ\È[œÏH‰Ó”ËœXÚØYÙT™[H™[][ÛœÚ\YH‰Ù˜]Ú[™Ô™[YHˆ\OHš‹ËÜØÚ[X\Ë›Ü[[›Ü›X]Ë›Ü™ËÛÙ™šXÙQØİ[Y[ÌŒ‹Ü™[][ÛœÚ\ËÚ[XYÙHˆ\™Ù]H‹‹‹ÛYYXKÉÚ[XYÙS˜[Y_H‹ÏÔ™[][ÛœÚ\Ï˜
+NÂˆš\™š[JÙ˜]Ú[™ÜËÉÙ˜]Ú[™Ó˜[Y_K[˜]Ú[™Ö[
 
-function writeStringCell(xml, reference, value) {
-  const match = xml.match(cellPattern(reference));
-  if (!match) throw new Error(`The Check Point cell ${reference} is missing from the selected template.`);
-  let opening = match[0].slice(0, match[0].indexOf('>') + 1);
-  if (opening.endsWith('/>')) opening = opening.slice(0, -2) + '>';
-  opening = opening.replace(/\s+t="[^"]*"/, '') + ' t="inlineStr"';
-  const replacement = `${opening}<is><t>${xmlEscape(value)}</t></is></c>`;
-  return xml.replace(match[0], replacement);
-}
-
-function writeNumberCell(xml, reference, value) {
-  const match = xml.match(cellPattern(reference));
-  if (!match) throw new Error(`The Min/Max cell ${reference} is missing from the selected template.`);
-  let opening = match[0].slice(0, match[0].indexOf('>') + 1);
-  if (opening.endsWith('/>')) opening = opening.slice(0, -2) + '>';
-  opening = opening.replace(/\s+t="[^"]*"/, '');
-  return xml.replace(match[0], `${opening}<v>${xmlEscape(value)}</v></c>`);
-}
-
-function writeFormulaCache(xml, reference, value) {
-  const match = xml.match(cellPattern(reference));
-  if (!match) return xml;
-  let replacement = match[0].replace(/\s+t="[^"]*"/, '');
-  replacement = replacement.replace(/<v>[\s\S]*?<\/v>/, `<v>${xmlEscape(value)}</v>`);
-  return xml.replace(match[0], replacement);
-}
-
-function numberValue(value) {
-  const text = String(value ?? '').trim().replace(/[âˆ’â€“]/g, '-');
-  const match = text.match(/^\s*(?:[Ã˜Ã¸âŒ€Rr]\s*)?([+-]?(?:\d+(?:\.\d*)?|\.\d+))\s*(?:(?:mm|cm|in(?:ches)?|Âµm|Î¼m|um|deg(?:rees)?|Â°|%)\s*)?$/i);
-  if (!match) return null;
-  const number = Number(match[1]);
-  return Number.isFinite(number) ? number : null;
-}
-
-function toleranceBounds(tolerance) {
-  const text = String(tolerance ?? '').trim().replace(/[âˆ’â€“]/g, '-').replace(/,/g, '');
-  if (!text) return null;
-  const numeric = '(\\d+(?:\\.\\d*)?|\\.\\d+)';
-  const asymmetric = text.match(new RegExp(`^\\s*\\+\\s*${numeric}\\s*\\/\\s*-\\s*${numeric}(?:\\s*(?:mm|cm|in(?:ches)?|Âµm|Î¼m|um|Â°)\\s*)?$`, 'i'));
-  if (asymmetric) return { lower: Math.abs(Number(asymmetric[2])), upper: Math.abs(Number(asymmetric[1])) };
-  const single = text.match(new RegExp(`^\\s*(Â±|\\+\\/\\-|\\+\\s*\\/\\s*-)?\\s*([+-]?)\\s*${numeric}(?:\\s*(?:mm|cm|in(?:ches)?|Âµm|Î¼m|um|Â°)\\s*)?$`, 'i'));
-  if (!single) return null;
-  const amount = Math.abs(Number(single[3]));
-  if (!Number.isFinite(amount)) return null;
-  if (single[1] && single[1].includes('+') && !single[1].includes('Â±') && !/\+\s*\/\s*-/.test(single[1])) {
-    return single[2] === '-' ? { lower: amount, upper: 0 } : { lower: 0, upper: amount };
-  }
-  if (!single[1] && single[2] === '+') return { lower: 0, upper: amount };
-  if (!single[1] && single[2] === '-') return { lower: amount, upper: 0 };
-  return { lower: amount, upper: amount };
-}
-
-function limitsFor(bubble) {
-  if ((bubble.toleranceMode || 'nominal-tolerance') === 'min-max') {
-    const min = numberValue(bubble.minValue), max = numberValue(bubble.maxValue);
-    return min !== null && max !== null ? { min, max, nominal: Number(((min + max) / 2).toFixed(10)) } : null;
-  }
-  const parsed = parseDimension(String(bubble.dimension || ''));
-  const nominal = numberValue(bubble.nominal) ?? numberValue(parsed?.nominal);
-  const bounds = toleranceBounds(bubble.tolerance || parsed?.tolerance);
-  if (nominal === null || !bounds) return null;
-  return { min: Number((nominal - bounds.lower).toFixed(10)), max: Number((nominal + bounds.upper).toFixed(10)), nominal };
-}
-
-function relationshipTarget(path, target) {
-  const parts = path.split('/');
-  parts.pop();
-  for (const part of target.split('/')) {
-    if (!part || part === '.') continue;
-    if (part === '..') parts.pop();
-    else parts.push(part);
-  }
-  return parts.join('/');
-}
-
-function relativeTarget(fromFilePath, toFilePath) {
-  const from = fromFilePath.split('/');
-  from.pop();
-  const to = toFilePath.split('/');
-  while (from.length && to.length && from[0] === to[0]) { from.shift(); to.shift(); }
-  return [...from.map(() => '..'), ...to].join('/');
-}
-
-function drawingAreaAspect(xml) {
-  const format = xml.match(/<sheetFormatPr\b[^>]*>/)?.[0] || '';
-  const defaultWidth = Number(attrs(format).defaultColWidth || 8.43);
-  const defaultHeight = Number(attrs(format).defaultRowHeight || 15);
-  const colsXml = xml.match(/<cols>([\s\S]*?)<\/cols>/)?.[1] || '';
-  const columns = [...colsXml.matchAll(/<col\b[^>]*\/?\s*>/g)].map(match => attrs(match[0]));
-  let width = 0;
-  for (let index = 1; index <= 17; index++) {
-    const column = columns.find(item => Number(item.min) <= index && Number(item.max) >= index);
-    const charWidth = Number(column?.width || defaultWidth);
-    width += Math.floor(charWidth * 7 + 5);
-  }
-  const rowsXml = xml.match(/<sheetData>([\s\S]*?)<\/sheetData>/)?.[1] || '';
-  const rows = [...rowsXml.matchAll(/<row\b[^>]*\/?\s*>/g)].map(match => attrs(match[0]));
-  let height = 0;
-  for (let index = 1; index <= 45; index++) {
-    const row = rows.find(item => Number(item.r) === index);
-    height += Number(row?.ht || defaultHeight) * 96 / 72;
-  }
-  return width / height;
-}
-
-async function drawingPNG(pages, aspectRatio) {
-  if (!pages.length) throw new Error('No drawing pages are available for the DRW sheet.');
-  const output = document.createElement('canvas');
-  output.width = 2400;
-  output.height = Math.max(1, Math.round(output.width / aspectRatio));
-  const context = output.getContext('2d');
-  context.fillStyle = '#ffffff';
-  context.fillRect(0, 0, output.width, output.height);
-  const pageAspect = pages.reduce((total, page) => total + page.width / page.height, 0) / pages.length;
-  const columns = pages.length === 1 ? 1 : Math.max(1, Math.ceil(Math.sqrt(pages.length * aspectRatio / pageAspect)));
-  const rows = Math.ceil(pages.length / columns);
-  const gap = 28;
-  const tileWidth = (output.width - gap * (columns + 1)) / columns;
-  const tileHeight = (output.height - gap * (rows + 1)) / rows;
-  pages.forEach((page, index) => {
-    const column = index % columns, row = Math.floor(index / columns);
-    const scale = Math.min(tileWidth / page.canvas.width, tileHeight / page.canvas.height);
-    const width = page.canvas.width * scale, height = page.canvas.height * scale;
-    const x = gap + column * (tileWidth + gap) + (tileWidth - width) / 2;
-    const y = gap + row * (tileHeight + gap) + (tileHeight - height) / 2;
-    context.drawImage(page.canvas, x, y, width, height);
-  });
-  const blob = await new Promise(resolve => output.toBlob(resolve, 'image/png'));
-  output.width = output.height = 0;
-  if (!blob) throw new Error('Could not prepare the bubbled drawing for the OQC form.');
-  return new Uint8Array(await blob.arrayBuffer());
-}
-
-function drawingXml() {
-  return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<xdr:wsDr xmlns:xdr="${NS.drawing}" xmlns:a="${NS.image}" xmlns:r="${NS.officeRel}"><xdr:twoCellAnchor editAs="oneCell"><xdr:from><xdr:col>0</xdr:col><xdr:colOff>0</xdr:colOff><xdr:row>0</xdr:row><xdr:rowOff>0</xdr:rowOff></xdr:from><xdr:to><xdr:col>17</xdr:col><xdr:colOff>0</xdr:colOff><xdr:row>45</xdr:row><xdr:rowOff>0</xdr:rowOff></xdr:to><xdr:pic><xdr:nvPicPr><xdr:cNvPr id="1" name="Finished bubbled drawing"/><xdr:cNvPicPr><a:picLocks noChangeAspect="1"/></xdr:cNvPicPr></xdr:nvPicPr><xdr:blipFill><a:blip r:embed="rId1"/><a:stretch><a:fillRect/></a:stretch></xdr:blipFill><xdr:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="0" cy="0"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></xdr:spPr></xdr:pic><xdr:clientData/></xdr:twoCellAnchor></xdr:wsDr>`;
-}
-
-function addDrawingRelationship(xml, relationshipId) {
-  const drawingTag = `<drawing r:id="${xmlEscape(relationshipId)}"/>`;
-  if (/<drawing\b/.test(xml)) throw new Error('The selected template already has a drawing on its DRW sheet.');
-  const extension = xml.search(/<extLst\b/);
-  if (extension >= 0) return xml.slice(0, extension) + drawingTag + xml.slice(extension);
-  return xml.replace('</worksheet>', `${drawingTag}</worksheet>`);
-}
-
-function addContentType(xml, drawingName) {
-  if (!/Extension="png"/.test(xml)) xml = xml.replace('</Types>', '<Default Extension="png" ContentType="image/png"/></Types>');
-  const partName = `/xl/drawings/${drawingName}.xml`;
-  if (!xml.includes(`PartName="${partName}"`)) xml = xml.replace('</Types>', `<Override PartName="${partName}" ContentType="application/vnd.openxmlformats-officedocument.drawing+xml"/></Types>`);
-  return xml;
-}
-
-export async function makeOqcWorkbook(templateBytes, bubbles, drawingPages) {
-  const zip = await window.JSZip.loadAsync(templateBytes);
-  const workbookXml = await zip.file('xl/workbook.xml')?.async('string');
-  const workbookRels = await zip.file('xl/_rels/workbook.xml.rels')?.async('string');
-  if (!workbookXml || !workbookRels) throw new Error('The selected file is not a readable Excel workbook.');
-  const reportPath = worksheetPath(workbookXml, workbookRels, 'OQCIR');
-  const drawingPath = worksheetPath(workbookXml, workbookRels, 'DRW');
-  let reportXml = await zip.file(reportPath)?.async('string');
-  let drawingSheetXml = await zip.file(drawingPath)?.async('string');
-  let contentTypes = await zip.file('[Content_Types].xml')?.async('string');
-  if (!reportXml || !drawingSheetXml || !contentTypes) throw new Error('The selected workbook does not match the OQC report template.');
-  if (!/<mergeCell\b[^>]*ref="A1:Q45"/.test(drawingSheetXml)) throw new Error('The DRW sheet does not have the expected drawing area A1:Q45.');
-
-  const normalBubbles = bubbles.filter(bubble => !bubble.msa);
-  if (normalBubbles.length > CELL_ROWS.length) throw new Error('This OQC form has room for 50 red bubble checkpoints.');
-  let missingLimits = 0;
-  normalBubbles.forEach((bubble, index) => {
-    const row = CELL_ROWS[index];
-    reportXml = writeStringCell(reportXml, `A${row}`, String(index + 1));
-    const limits = limitsFor(bubble);
-    if (!limits) { missingLimits++; return; }
-    reportXml = writeNumberCell(reportXml, `D${row}`, limits.min);
-    reportXml = writeNumberCell(reportXml, `F${row}`, limits.max);
-    reportXml = writeFormulaCache(reportXml, `E${row}`, limits.nominal);
-  });
-
-  const drawingRelsFilePath = `${drawingPath.slice(0, drawingPath.lastIndexOf('/'))}/_rels/${drawingPath.slice(drawingPath.lastIndexOf('/') + 1)}.rels`;
-  const drawingRelsXml = await zip.file(drawingRelsFilePath)?.async('string') || `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="${NS.packageRel}"/>`;
-  const existingDrawing = [...drawingRelsXml.matchAll(/<Relationship\b[^>]*\/?\s*>/g)].map(match => attrs(match[0])).find(item => item.Type?.endsWith('/drawing'));
-  if (existingDrawing) throw new Error('The selected template already has a drawing on its DRW sheet.');
-  const usedIds = new Set([...drawingRelsXml.matchAll(/<Relationship\b[^>]*\/?\s*>/g)].map(match => attrs(match[0]).Id));
-  let sheetRelIndex = 1;
-  while (usedIds.has(`rId${sheetRelIndex}`)) sheetRelIndex++;
-  const sheetRelId = `rId${sheetRelIndex}`;
-  const drawingName = (() => { let index = 1; while (zip.file(`xl/drawings/drawing${index}.xml`)) index++; return `drawing${index}`; })();
-  const imageName = (() => { let index = 1; while (zip.file(`xl/media/image${index}.png`)) index++; return `image${index}.png`; })();
-  const drawingRelId = 'rId1';
-  const picture = await drawingPNG(drawingPages, drawingAreaAspect(drawingSheetXml));
-  drawingSheetXml = addDrawingRelationship(drawingSheetXml, sheetRelId);
-  const drawingPackagePath = `xl/drawings/${drawingName}.xml`;
-  const relativeDrawingPath = relativeTarget(drawingPath, drawingPackagePath);
-  const correctedRels = drawingRelsXml.replace('</Relationships>', `<Relationship Id="${sheetRelId}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/drawing" Target="${xmlEscape(relativeDrawingPath)}"/></Relationships>`);
-  const drawingRelsPath = `xl/drawings/_rels/${drawingName}.xml.rels`;
-  zip.file(reportPath, reportXml);
-  zip.file(drawingPath, drawingSheetXml);
-  zip.file(drawingRelsFilePath, correctedRels);
-  zip.file(drawingRelsPath, `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="${NS.packageRel}"><Relationship Id="${drawingRelId}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="../media/${imageName}"/></Relationships>`);
-  zip.file(`xl/drawings/${drawingName}.xml`, drawingXml());
-  zip.file(`xl/media/${imageName}`, picture);
-  zip.file('[Content_Types].xml', addContentType(contentTypes, drawingName));
-  const output = await zip.generateAsync({ type: 'uint8array', compression: 'DEFLATE' });
-  return { output, missingLimits, exportedCount: normalBubbles.length };
-}
+JNÂˆš\™š[JÛYYXKÉÚ[XYÙS˜[Y_XXİ\™JNÂˆš\™š[J	ÖĞÛÛ[Õ\\×K[	ËYÛÛ[\JÛÛ[\\Ë˜]Ú[™Ó˜[YJJNÂˆÛÛœİİ]]H]ØZ]š\™Ù[™\˜]P\Ş[˜ÊÈ\Nˆ	İZ[\œ˜^IËÛÛ\™\ÜÚ[Ûˆ	ÑQ“UIÈJNÂˆ™]\›ˆÈİ]]Z\ÜÚ[™Ó[Z]Ë^ÜYÛİ[ˆ›Ü›X[X˜›\Ë›[™İNÂŸB

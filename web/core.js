@@ -1,11 +1,27 @@
 import { PDFDocument, StandardFonts, rgb, degrees } from './vendor/pdf-lib.mjs';
 
 export function parseDimension(text) {
-  const value = text.trim().replace(/\s+/g, ' ');
+  const value = String(text ?? '').trim().replace(/\s+/g, ' ');
   // Conservative suggestions: accept a complete dimension, never general drawing prose.
-  const match = value.match(/^(?:(\d+)\s*[xX×]\s*)?([Øø⌀RrMm]?\s*[+-]?(?:\d+(?:\.\d+)?|\.\d+)\s*°?)(?:\s*(±\s*(?:\d+(?:\.\d+)?|\.\d+)\s*°?|\+\s*[\d.]+\s*\/\s*-\s*[\d.]+))?$/);
+  const number = '(?:\\d+(?:\\.\\d*)?|\\.\\d+)';
+  const tolerance = `(?:±\\s*${number}\\s*°?|\\+\\s*${number}(?:\\s*\\/\\s*|\\s+)-\\s*${number})`;
+  const match = value.match(new RegExp(`^(?:(\\d+)\\s*[xX×]\\s*)?([Øø⌀RrMm]?\\s*[+-]?${number}\\s*(?:mm|cm|in(?:ches)?|µm|μm|um|°)?)(?:\\s*(${tolerance}))?$`, 'i'));
   if (!match || !/[.±°Øø⌀RrMm]/.test(value)) return null;
   return { dimension: value, nominal: match[2].trim(), tolerance: match[3]?.trim() || '', notes: match[1] ? `Quantity: ${match[1]}` : '' };
+}
+
+export function toleranceComponents(value) {
+  const text = String(value ?? '').trim().replace(/[−–]/g, '-');
+  if (!text) return { upper: '', lower: '' };
+  const number = '(\\d+(?:\\.\\d*)?|\\.\\d+)';
+  const asymmetric = text.match(new RegExp(`^\\+\\s*${number}(?:\\s*\\/\\s*|\\s+)-\\s*${number}(?:\\s*(?:mm|cm|in(?:ches)?|µm|μm|um|°)\\s*)?$`, 'i'));
+  if (asymmetric) return { upper: asymmetric[1], lower: asymmetric[2] };
+  const single = text.match(new RegExp(`^(±)?\\s*([+-]?)\\s*${number}(?:\\s*(?:mm|cm|in(?:ches)?|µm|μm|um|°)\\s*)?$`, 'i'));
+  if (!single) return { upper: '', lower: '' };
+  if (single[1]) return { upper: single[3], lower: single[3] };
+  if (single[2] === '+') return { upper: single[3], lower: '' };
+  if (single[2] === '-') return { upper: '', lower: single[3] };
+  return { upper: single[3], lower: single[3] };
 }
 
 export function csvCell(value) {
@@ -26,7 +42,7 @@ function toleranceLimits(value) {
   const text = String(value ?? '').trim().replace(/[−–]/g, '-').replace(/,/g, '');
   if (!text) return null;
   const number = '(\\d+(?:\\.\\d*)?|\\.\\d+)';
-  const asymmetric = text.match(new RegExp(`^\\s*\\+\\s*${number}\\s*\\/\\s*-\\s*${number}(?:\\s*(?:mm|cm|in(?:ches)?|µm|μm|um|°)\\s*)?$`, 'i'));
+  const asymmetric = text.match(new RegExp(`^\\s*\\+\\s*${number}(?:\\s*\\/\\s*|\\s+)-\\s*${number}(?:\\s*(?:mm|cm|in(?:ches)?|µm|μm|um|°)\\s*)?$`, 'i'));
   if (asymmetric) return { lower: Math.abs(Number(asymmetric[2])), upper: Math.abs(Number(asymmetric[1])) };
   const single = text.match(new RegExp(`^\\s*(±|\\+\\/\\-|\\+\\s*\\/\\s*-)?\\s*([+-]?)\\s*${number}(?:\\s*(?:mm|cm|in(?:ches)?|µm|μm|um|°)\\s*)?$`, 'i'));
   if (!single) return null;

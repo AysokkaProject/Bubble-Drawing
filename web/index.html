@@ -1,146 +1,8 @@
-<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#f4f6f5">
-  <title>Bubble Drawing â€” Engineering PDF annotations</title>
-  <meta name="description" content="Add numbered bubbles to engineering drawings. Review dimensions and export annotated PDFs and inspection lists, all in your browser.">
-  <link rel="icon" href="./icon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="./style.css">
-</head>
-<body>
-  <header class="topbar">
-    <a class="brand" href="./" aria-label="Bubble Drawing home">
-      <span class="brand-icon" aria-hidden="true"><span></span><i></i></span>
-      <span class="brand-name">Bubble Drawing<small>ENGINEERING WORKSPACE</small></span>
-    </a>
-    <div class="topbar-actions">
-      <span class="privacy"><span class="privacy-dot" aria-hidden="true"></span>Files stay on your device</span>
-      <button id="auth-button" class="quiet-button" type="button">Sign in to sync</button>
-      <button id="open" class="primary open-button" type="button"><span aria-hidden="true">ï¼‹</span> Open drawing</button>
-      <input type="file" id="file" accept=".pdf,application/pdf" hidden>
-    </div>
-  </header>
-
-  <main class="app-shell">
-    <section class="workspace" aria-label="Drawing workspace">
-      <div class="document-bar">
-        <div class="document-title">
-          <span class="eyebrow"><span class="eyebrow-dot" aria-hidden="true"></span> ACTIVE DRAWING</span>
-          <h1 id="filename">Untitled workspace</h1>
-        </div>
-        <span id="filemeta" class="file-meta">PDF Â· up to 50 MB</span>
-      </div>
-
-      <div class="toolbar" aria-label="Drawing controls">
-        <div class="control-group page-controls">
-          <button id="prev" data-needs-doc aria-label="Previous page" disabled>â€¹</button>
-          <label class="page-label">Page <input id="page" type="number" min="1" value="1" aria-label="Page number" data-needs-doc disabled> <span id="pages">/ â€”</span></label>
-          <button id="next" data-needs-doc aria-label="Next page" disabled>â€º</button>
-        </div>
-        <div class="control-group zoom-controls">
-          <button id="zoomout" data-needs-doc aria-label="Zoom out" disabled>âˆ’</button>
-          <label class="zoom-value"><input id="zoom" type="number" min="15" max="6400" step="5" value="100" aria-label="Zoom percentage" data-needs-doc disabled><span>%</span></label>
-          <button id="zoomin" data-needs-doc aria-label="Zoom in" disabled>+</button>
-          <select id="zoom-preset" aria-label="Zoom preset" data-needs-doc disabled>
-            <option value="" selected>Zoom</option><option value="actual">Actual size</option><option value="fit-width">Fit width</option><option value="fit-page">Fit page</option>
-          </select>
-          <button id="rotate" data-needs-doc aria-label="Rotate page clockwise" disabled>â†» 90Â°</button>
-        </div>
-        <div class="control-group annotation-controls">
-          <button id="add" class="tool-button" data-needs-doc aria-pressed="false" disabled><span aria-hidden="true">ï¼‹</span> Add bubble</button>
-          <button id="add-msa" class="tool-button msa-tool" data-needs-doc aria-pressed="false" disabled><span aria-hidden="true">â’¶</span> MSA attribute</button>
-          <button id="detect" data-needs-doc disabled>Scan dimensions</button>
-          <button id="sort" data-needs-doc disabled>Sort by position</button>
-          <button id="save" data-needs-doc disabled>Save</button>
-          <button id="undo" aria-label="Undo last annotation change" disabled>Undo</button>
-        </div>
-      </div>
-
-      <div id="viewer" class="viewer">
-        <div id="empty" class="empty">
-          <div class="empty-art" aria-hidden="true">
-            <span class="art-orbit orbit-one"></span><span class="art-orbit orbit-two"></span>
-            <span class="art-sheet"><i></i><b>01</b><em>02</em></span>
-          </div>
-          <p class="eyebrow">FROM DRAWING TO INSPECTION</p>
-          <h2>Make every detail count.</h2>
-          <p class="empty-copy">Bring your drawing in. Keep every inspection point in view.</p>
-          <div class="empty-actions">
-            <button id="choose" class="primary" type="button">Choose a PDF <span aria-hidden="true">â†—</span></button>
-            <button id="sample" class="text-button" type="button">Explore a sample drawing</button>
-          </div>
-          <small>Drop a PDF anywhere in the workspace Â· up to 50 MB Â· no account needed</small>
-        </div>
-        <div id="paper" class="paper" hidden><canvas id="canvas" aria-label="PDF drawing"></canvas><div id="overlay" aria-label="Drawing annotations"></div></div>
-      </div>
-
-      <div class="statusbar">
-        <span id="status" role="status" aria-live="polite"><span class="status-dot" aria-hidden="true"></span> Ready to open a drawing</span>
-        <span id="review-note">Drag the drawing to pan Â· Scroll to zoom</span>
-        <span id="mode">REVIEW MODE</span>
-      </div>
-    </section>
-
-    <aside class="inspector" aria-label="Inspection register and exports">
-      <div class="panel-heading">
-        <div><span class="eyebrow">INSPECTION</span><h2>Bubble register</h2></div>
-        <span class="count" id="count">0</span>
-      </div>
-      <p class="panel-hint">Capture a requirement for every point you mark.</p>
-      <div id="register" class="register"><div class="register-empty"><span class="register-empty-icon" aria-hidden="true">â—</span><strong>Nothing marked yet</strong><span>Add a bubble on the drawing to start your register.</span></div></div>
-
-      <form id="editor" class="editor" hidden>
-        <div class="editor-heading"><strong id="selected-label">Bubble 1</strong><button id="delete" type="button" class="danger">Delete</button></div>
-        <div class="number-row"><label>Bubble number<input id="bubble-number" type="number" min="1" value="1"></label><button type="button" id="setnumber">Move to number</button></div>
-        <label>Tolerance format<select id="tolerance-mode"><option value="nominal-tolerance">Nominal and Â± tolerance</option><option value="min-max">Minimum and maximum</option></select></label>
-        <label>Dimension / requirement<input id="dimension" maxlength="200" placeholder="e.g. Ã˜12.00 Â±0.05 or 12.05 | 11.95"></label>
-        <div class="fields" id="nominal-tolerance-fields"><label>Nominal<input id="nominal" maxlength="80" placeholder="12.00"></label><label>Tolerance<input id="tolerance" maxlength="80" placeholder="Â±0.05"></label></div>
-        <div class="fields" id="min-max-fields" hidden><label>Minimum value<input id="min-value" maxlength="80" placeholder="11.95"></label><label>Maximum value<input id="max-value" maxlength="80" placeholder="12.05"></label></div>
-        <div class="fields"><label>Feature / GD&amp;T<input id="feature" maxlength="80" placeholder="e.g. Position"></label><label>Datums<input id="datums" maxlength="80" placeholder="e.g. A | B | C"></label></div>
-        <label>Notes<textarea id="notes" maxlength="500" placeholder="Inspection notes" rows="2"></textarea></label>
-        <div class="editor-actions"><label class="check"><input id="reviewed" type="checkbox"> Reviewed</label><button id="moveup" type="button" aria-label="Move selected bubble earlier">â†‘</button><button id="movedown" type="button" aria-label="Move selected bubble later">â†“</button></div>
-        <p id="source-info" class="small muted"></p>
-        <button id="learn" type="button" class="text-button">Remember this correction</button>
-        <p class="small muted">Changes save to this session automatically.</p>
-      </form>
-
-      <div class="inspector-bottom">
-        <section class="exports" aria-label="Export drawing and inspection data">
-          <div class="section-label"><span class="eyebrow">DELIVER</span><span aria-hidden="true">â†—</span></div>
-          <p id="review-summary">Add a bubble to begin.</p>
-          <button id="exportpdf" class="primary" data-needs-doc disabled>Download bubbled PDF <span aria-hidden="true">â†“</span></button>
-          <div class="fields"><button id="exportimage" data-needs-doc disabled>Save image</button><button id="print" data-needs-doc disabled>Print</button></div>
-          <button id="exportcsv" disabled>Download inspection CSV</button>
-          <button id="export-oqc" disabled>Export OQC Excel form</button>
-          <input id="oqc-template" type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden>
-          <p class="small muted">Choose the blank OQC workbook. The form is filled on this device and is not uploaded.</p>
-          <p id="learning-status" class="small learning-status">Learning: 0 confirmed corrections this session.</p>
-          <div class="saved-heading"><strong>Saved reviews</strong><button id="clear-saves" type="button">Clear</button></div>
-          <div id="saved-reviews" class="saved-reviews"><span class="muted small">No saved reviews yet.</span></div>
-        </section>
-
-        <section class="cloud-panel" aria-labelledby="cloud-title">
-          <div class="cloud-heading"><span class="cloud-icon" aria-hidden="true">â†¥</span><div><strong id="cloud-title">Your cloud drawings</strong><span>Private to your account</span></div><button id="save-cloud" type="button" disabled>Save current</button></div>
-          <p id="cloud-hint" class="small muted">Sign in to save PDFs and bubbles to your account.</p>
-          <div id="cloud-drawings" class="saved-reviews"><span class="muted small">No cloud drawings loaded.</span></div>
-        </section>
-      </div>
-    </aside>
-  </main>
-
-  <footer><span>Bubble Drawing</span><span>Local processing Â· PDF &amp; CSV export</span></footer>
-
-  <dialog id="auth-dialog"><form id="auth-form"><h2>Sign in to Bubble Drawing</h2><p>Save drawings privately to your Supabase account and reopen them on another device.</p><label>Email<input id="auth-email" type="email" autocomplete="email" required maxlength="254"></label><label>Password<input id="auth-password" type="password" autocomplete="current-password" required minlength="6" maxlength="128"></label><p id="auth-message" class="small muted" role="status"></p><div class="dialog-actions"><button id="auth-close" type="button">Cancel</button><button id="auth-signup" type="button">Create account</button><button id="auth-signin" type="submit" class="primary">Sign in</button></div></form></dialog>
-  <dialog id="scan-dialog"><form method="dialog"><h2>Scan drawing</h2><p>Capture dimension, tolerance and GD&amp;T candidates. Bubbles are placed above or below detected values to keep the text readable. Two aligned values may be suggested as minimum and maximum; one value is suggested as nominal. Check every suggestion against the drawing.</p><label>Pages<select id="scan-pages"><option value="all">All pages</option><option value="current">Current page</option></select></label><label class="check"><input id="scan-ocr" type="checkbox" checked> Include OCR for scanned content</label><p class="small muted">OCR runs on this device and may take time. Faint text, rotated labels and GD&amp;T symbols can be missed or misread.</p><div class="dialog-actions"><button value="cancel">Cancel</button><button id="start-scan" type="button" class="primary">Start scan</button></div></form></dialog>
-  <div id="scan-progress" class="progress-toast" hidden><span id="scan-message" role="status">Scanningâ€¦</span><progress id="scan-meter" max="100" value="0"></progress><button id="cancel-scan">Stop scan</button></div>
-  <dialog id="image-dialog"><form method="dialog"><h2>Save drawing as image</h2><label>Format<select id="image-format"><option value="png">PNG</option><option value="jpeg">JPEG</option></select></label><label>Pages<select id="image-pages"><option value="current">Current page</option><option value="all">All pages (ZIP file)</option></select></label><label>Resolution<select id="image-dpi"><option value="150">150 DPI</option><option value="300">300 DPI</option></select></label><p class="small muted">Includes bubbles and page rotation. Very large pages are capped at 25 megapixels.</p><div class="dialog-actions"><button value="cancel">Cancel</button><button id="save-image" type="button" class="primary">Download</button></div></form></dialog>
-  <dialog id="print-dialog"><form method="dialog"><h2>Print drawing</h2><label>Pages<select id="print-pages"><option value="all">All pages</option><option value="current">Current page</option></select></label><label>Drawing scale (%)<input id="print-scale" type="number" min="10" max="200" step="5" value="100"></label><p>Use the rotation buttons before printing. Scale changes the drawing size on its original paper size; above 100% may crop edges.</p><p class="small muted">In the printer dialog, select the matching paper size, 100% scale, and disable headers/footers.</p><div class="dialog-actions"><button value="cancel">Cancel</button><button id="prepare-print" type="button" class="primary">Open print preview</button></div></form></dialog>
-  <script src="./vendor/jszip.min.js"></script>
-  <script src="./vendor/supabase/supabase.js"></script>
-  <script type="module" src="./app.js"></script>
-  <noscript>This PDF editor requires JavaScript. Enable JavaScript in your browser to open a drawing.</noscript>
-</body>
-</html>
-
+YªçŠx-®éÜj×¢ëiºÚ+Š§j[h‘éÜ¢éíã»N‹Z–‹­¦ëeŠw¬Ôğ…‘½ÑåÁ”¡Ñµ°ø4(ñ¡Ñµ°±…¹œô‰•¸ˆø4(ñ¡•…ø4(€€ñµ•Ñ„¡…ÉÍ•Ğô‰ÕÑ˜´àˆø4(€€ñµ•Ñ„¹…µ”ô‰Ù¥•İÁ½ÉĞˆ½¹Ñ•¹Ğô‰İ¥‘Ñ õ‘•Ù¥”µİ¥‘Ñ °¥¹¥Ñ¥…°µÍ…±”ôÄˆø4(€€ñµ•Ñ„¹…µ”ô‰Ñ¡•µ”µ½±½Èˆ½¹Ñ•¹Ğôˆ˜Ñ˜Ù˜Ôˆø4(€€ñÑ¥Ñ±”ù	Õ‰‰±”É…İ¥¹œƒŠP¹¥¹••É¥¹œA…¹¹½Ñ…Ñ¥½¹Ìğ½Ñ¥Ñ±”ø4(€€ñµ•Ñ„¹…µ”ô‰‘•ÍÉ¥ÁÑ¥½¸ˆ½¹Ñ•¹Ğô‰‘¹Õµ‰•É•‰Õ‰‰±•ÌÑ¼•¹¥¹••É¥¹œ‘É…İ¥¹Ì¸I•Ù¥•Ü‘¥µ•¹Í¥½¹Ì…¹•áÁ½ÉĞ…¹¹½Ñ…Ñ•AÌ…¹¥¹ÍÁ•Ñ¥½¸±¥ÍÑÌ°…±°¥¸å½ÕÈ‰É½İÍ•È¸ˆø4(€€ñ±¥¹¬É•°ô‰¥½¸ˆ¡É•˜ôˆ¸½¥½¸¹ÍÙœˆÑåÁ”ô‰¥µ…”½ÍÙœ­áµ°ˆø4(€€ñ±¥¹¬É•°ô‰ÍÑå±•Í¡••Ğˆ¡É•˜ôˆ¸½ÍÑå±”¹ÍÌˆø4(ğ½¡•…ø4(ñ‰½‘äø4(€€ñ¡•…‘•È±…ÍÌô‰Ñ½Á‰…Èˆø4(€€€€ñ„±…ÍÌô‰‰É…¹ˆ¡É•˜ôˆ¸¼ˆ…É¥„µ±…‰•°ô‰	Õ‰‰±”É…İ¥¹œ¡½µ”ˆø4(€€€€€€ñÍÁ…¸±…ÍÌô‰‰É…¹µ¥½¸ˆ…É¥„µ¡¥‘‘•¸ô‰ÑÉÕ”ˆøñÍÁ…¸øğ½ÍÁ…¸øñ¤øğ½¤øğ½ÍÁ…¸ø4(€€€€€€ñÍÁ…¸±…ÍÌô‰‰É…¹µ¹…µ”ˆù	Õ‰‰±”É…İ¥¹œñÍµ…±°ù9%9I%9]=I-MAğ½Íµ…±°øğ½ÍÁ…¸ø4(€€€€ğ½„ø4(€€€€ñ‘¥Ø±…ÍÌô‰Ñ½Á‰…Èµ…Ñ¥½¹Ìˆø4(€€€€€€ñÍÁ…¸±…ÍÌô‰ÁÉ¥Ù…äˆøñÍÁ…¸±…ÍÌô‰ÁÉ¥Ù…äµ‘½Ğˆ…É¥„µ¡¥‘‘•¸ô‰ÑÉÕ”ˆøğ½ÍÁ…¸ù¥±•ÌÍÑ…ä½¸å½ÕÈ‘•Ù¥”ğ½ÍÁ…¸ø4(€€€€€€ñ‰ÕÑÑ½¸¥ô‰…ÕÑ µ‰ÕÑÑ½¸ˆ±…ÍÌô‰ÅÕ¥•Ğµ‰ÕÑÑ½¸ˆÑåÁ”ô‰‰ÕÑÑ½¸ˆùM¥¸¥¸Ñ¼Íå¹Œğ½‰ÕÑÑ½¸ø4(€€€€€€ñ‰ÕÑÑ½¸¥ô‰½Á•¸ˆ±…ÍÌô‰ÁÉ¥µ…Éä½Á•¸µ‰ÕÑÑ½¸ˆÑåÁ”ô‰‰ÕÑÑ½¸ˆøñÍÁ…¸…É¥„µ¡¥‘‘•¸ô‰ÑÉÕ”ˆû¾ò,ğ½ÍÁ…¸ø=Á•¸‘É…İ¥¹œğ½‰ÕÑÑ½¸ø4(€€€€€€ñ¥¹ÁÕĞÑåÁ”ô‰™¥±”ˆ¥ô‰™¥±”ˆ…•ÁĞôˆ¹Á‘˜±…ÁÁ±¥…Ñ¥½¸½Á‘˜ˆ¡¥‘‘•¸ø4(€€€€ğ½‘¥Øø4(€€ğ½¡•…‘•Èø4(4(€€ñµ…¥¸±…ÍÌô‰…ÁÀµÍ¡•±°ˆø4(€€€€ñÍ•Ñ¥½¸±…ÍÌô‰İ½É­ÍÁ…”ˆ…É¥„µ±…‰•°ô‰É…İ¥¹œİ½É­ÍÁ…”ˆø4(€€€€€€ñ‘¥Ø±…ÍÌô‰‘½Õµ•¹Ğµ‰…Èˆø4(€€€€€€€€ñ‘¥Ø±…ÍÌô‰‘½Õµ•¹ĞµÑ¥Ñ±”ˆø4(€€€€€€€€€€ñÍÁ…¸±…ÍÌô‰•å•‰É½ÜˆøñÍÁ…¸±…ÍÌô‰•å•‰É½Üµ‘½Ğˆ…É¥„µ¡¥‘‘•¸ô‰ÑÉÕ”ˆøğ½ÍÁ…¸øQ%YI]%9ğ½ÍÁ…¸ø4(€€€€€€€€€€ñ Ä¥ô‰™¥±•¹…µ”ˆùU¹Ñ¥Ñ±•İ½É­ÍÁ…”ğ½ Äø4(€€€€€€€€ğ½‘¥Øø4(€€€€€€€€ñÍÁ…¸¥ô‰™¥±•µ•Ñ„ˆ±…ÍÌô‰™¥±”µµ•Ñ„ˆùAƒ
+ÜÕÀÑ¼€ÔÀ5ğ½ÍÁ…¸ø4(€€€€€€ğ½‘¥Øø4(4(€€€€€€ñ‘¥Ø±…ÍÌô‰Ñ½½±‰…Èˆ…É¥„µ±…‰•°ô‰É…İ¥¹œ½¹ÑÉ½±Ìˆø4(€€€€€€€€ñ‘¥Ø±…ÍÌô‰½¹ÑÉ½°µÉ½ÕÀÁ…”µ½¹ÑÉ½±Ìˆø4(€€€€€€€€€€ñ‰ÕÑÑ½¸¥ô‰ÁÉ•Øˆ‘…Ñ„µ¹••‘Ìµ‘½Œ…É¥„µ±…‰•°ô‰AÉ•Ù¥½ÕÌÁ…”ˆ‘¥Í…‰±•ûŠäğ½‰ÕÑÑ½¸ø4(€€€€€€€€€€ñ±…‰•°±…ÍÌô‰Á…”µ±…‰•°ˆùA…”€ñ¥¹ÁÕĞ¥ô‰Á…”ˆÑåÁ”ô‰¹Õµ‰•Èˆµ¥¸ôˆÄˆÙ…±Õ”ôˆÄˆ…É¥„µ±…‰•°ô‰A…”¹Õµ‰•Èˆ‘…Ñ„µ¹••‘Ìµ‘½Œ‘¥Í…‰±•ø€ñÍÁ…¸¥ô‰Á…•Ìˆø¼ƒŠPğ½ÍÁ…¸øğ½±…‰•°ø4(€€€€€€€€€€ñ‰ÕÑÑ½¸¥ô‰¹•áĞˆ‘…Ñ„µ¹••‘Ìµ‘½Œ…É¥„µ±…‰•°ô‰9•áĞÁ…”ˆ‘¥Í…‰±•ûŠèğ½‰ÕÑÑ½¸ø4(€€€€€€€€ğ½‘¥Øø4(€€€€€€€€ñ‘¥Ø±…ÍÌô‰½¹ÑÉ½°µÉ½ÕÀé½½´µ½¹ÑÉ½±Ìˆø4(€€€€€€€€€€ñ‰ÕÑÑ½¸¥ô‰é½½µ½ÕĞˆ‘…Ñ„µ¹••‘Ìµ‘½Œ…É¥„µ±…‰•°ô‰i½½´½ÕĞˆ‘¥Í…‰±•ûŠ"Hğ½‰ÕÑÑ½¸ø4(€€€€€€€€€€ñ±…‰•°±…ÍÌô‰é½½´µÙ…±Õ”ˆøñ¥¹ÁÕĞ¥ô‰é½½´ˆÑåÁ”ô‰¹Õµ‰•Èˆµ¥¸ôˆÄÔˆµ…àôˆØĞÀÀˆÍÑ•ÀôˆÔˆÙ…±Õ”ôˆÄÀÀˆ…É¥„µ±…‰•°ô‰i½½´Á•É•¹Ñ…”ˆ‘…Ñ„µ¹••‘Ìµ‘½Œ‘¥Í…‰±•øñÍÁ…¸ø”ğ½ÍÁ…¸øğ½±…‰•°ø4(€€€€€€€€€€ñ‰ÕÑÑ½¸¥ô‰é½½µ¥¸ˆ‘…Ñ„µ¹••‘Ìµ‘½Œ…É¥„µ±…‰•°ô‰i½½´¥¸ˆ‘¥Í…‰±•ø¬ğ½‰ÕÑÑ½¸ø4(€€€€€€€€€€ñÍ•±•Ğ¥ô‰é½½´µÁÉ•Í•Ğˆ…É¥„µ±…‰•°ô‰i½½´ÁÉ•Í•Ğˆ‘…Ñ„µ¹••‘Ìµ‘½Œ‘¥Í…‰±•ø4(€€€€€€€€€€€€ñ½ÁÑ¥½¸Ù…±Õ”ôˆˆÍ•±•Ñ•ùi½½´ğ½½ÁÑ¥½¸øñ½ÁÑ¥½¸Ù…±Õ”ô‰…ÑÕ…°ˆùÑÕ…°Í¥é”ğ½½ÁÑ¥½¸øñ½ÁÑ¥½¸Ù…±Õ”ô‰™¥Ğµİ¥‘Ñ ˆù¥Ğİ¥‘Ñ ğ½½ÁÑ¥½¸øñ½ÁÑ¥½¸Ù…±Õ”ô‰™¥ĞµÁ…”ˆù¥ĞÁ…”ğ½½ÁÑ¥½¸ø4(€€€€€€€€€€ğ½Í•±•Ğø4(€€€€€€€€€€ñ‰ÕÑÑ½¸¥ô‰É½Ñ…Ñ”ˆ‘…Ñ„µ¹••‘Ìµ‘½Œ…É¥„µ±…‰•°ô‰I½Ñ…Ñ”Á…”±½­İ¥Í”ˆ‘¥Í…‰±•ûŠì€äÃ
+Àğ½‰ÕÑÑ½¸ø4(€€€€€€€€ğ½‘¥Øø4(€€€€€€€€ñ‘¥Ø±…ÍÌô‰½¹ÑÉ½°µÉ½ÕÀ…¹¹½Ñ…Ñ¥½¸µ½¹ÑÉ½±Ìˆø4(€€€€€€€€€€ñ‰ÕÑÑ½¸¥ô‰…‘ˆ±…ÍÌô‰Ñ½½°µ‰ÕÑÑ½¸ˆ‘…Ñ„µ¹••‘Ìµ‘½Œ…É¥„µÁÉ•ÍÍ•ô‰™…±Í”ˆ‘¥Í…‰±•øñÍÁ…¸…É¥„µ¡¥‘‘•¸ô‰ÑÉÕ”ˆû¾ò,ğ½ÍÁ…¸ø‘‰Õ‰‰±”ğ½‰ÕÑÑ½¸ø4(€€€€€€€€€€ñ‰ÕÑÑ½¸¥ô‰…‘µµÍ„ˆ±…ÍÌô‰Ñ½½°µ‰ÕÑÑ½¸µÍ„µÑ½½°ˆ‘…Ñ„µ¹••‘Ìµ‘½Œ…É¥„µÁÉ•ÍÍ•ô‰™…±Í”ˆ‘¥Í…‰±•øñÍÁ…¸…É¥„µ¡¥‘‘•¸ô‰ÑÉÕ”ˆûŠJØğ½ÍÁ…¸ø5M…ÑÑÉ¥‰ÕÑ”ğ½‰ÕÑÑ½¸ø4(€€€€€€€€€€ñ‰ÕÑÑ½¸¥ô‰‘•Ñ•Ğˆ‘…Ñ„µ¹••‘Ìµ‘½Œ‘¥Í…‰±•ùM…¸‘¥µ•¹Í¥½¹Ìğ½‰ÕÑÑ½¸ø4(€€€€€€€€€€ñ‰ÕÑÑ½¸¥ô‰Í½ÉĞˆ‘…Ñ„µ¹••‘Ìµ‘½Œ‘¥Í…‰±•ùM½ÉĞ‰äÁ½Í¥Ñ¥½¸ğ½‰ÕÑÑ½¸ø4(€€€€€€€€€€ñ‰ÕÑÑ½¸¥ô‰Í…Ù”ˆ‘…Ñ„µ¹••‘Ìµ‘½Œ‘¥Í…‰±•ùM…Ù”ğ½‰ÕÑÑ½¸ø4(€€€€€€€€€€ñ‰ÕÑÑ½¸¥ô‰Õ¹‘¼ˆ…É¥„µ±…‰•°ô‰U¹‘¼±…ÍĞ…¹¹½Ñ…Ñ¥½¸¡…¹”ˆ‘¥Í…‰±•ùU¹‘¼ğ½‰ÕÑÑ½¸ø4(€€€€€€€€ğ½‘¥Øø4(€€€€€€ğ½‘¥Øø4(4(€€€€€€ñ‘¥Ø¥ô‰Ù¥•İ•Èˆ±…ÍÌô‰Ù¥•İ•Èˆø4(€€€€€€€€ñ‘¥Ø¥ô‰•µÁÑäˆ±…ÍÌô‰•µÁÑäˆø4(€€€€€€€€€€ñ‘¥Ø±…ÍÌô‰•µÁÑäµ…ÉĞˆ…É¥„µ¡¥‘‘•¸ô‰ÑÉÕ”ˆø4(€€€€€€€€€€€€ñÍÁ…¸±…ÍÌô‰…ÉĞµ½É‰¥Ğ½É‰¥Ğµ½¹”ˆøğ½ÍÁ…¸øñÍÁ…¸±…ÍÌô‰…ÉĞµ½É‰¥Ğ½É‰¥ĞµÑİ¼ˆøğ½ÍÁ…¸ø4(€€€€€€€€€€€€ñÍÁ…¸±…ÍÌô‰…ÉĞµÍ¡••Ğˆøñ¤øğ½¤øñˆøÀÄğ½ˆøñ•´øÀÈğ½•´øğ½ÍÁ…¸ø4(€€€€€€€€€€ğ½‘¥Øø4(€€€€€€€€€€ñÀ±…ÍÌô‰•å•‰É½ÜˆùI=4I]%9Q<%9MAQ%=8ğ½Àø4(€€€€€€€€€€ñ Èù5…­”•Ù•Éä‘•Ñ…¥°½Õ¹Ğ¸ğ½ Èø4(€€€€€€€€€€ñÀ±…ÍÌô‰•µÁÑäµ½Áäˆù	É¥¹œå½ÕÈ‘É…İ¥¹œ¥¸¸-••À•Ù•Éä¥¹ÍÁ•Ñ¥½¸Á½¥¹Ğ¥¸Ù¥•Ü¸ğ½Àø4(€€€€€€€€€€ñ‘¥Ø±…ÍÌô‰•µÁÑäµ…Ñ¥½¹Ìˆø4(€€€€€€€€€€€€ñ‰ÕÑÑ½¸¥ô‰¡½½Í”ˆ±…ÍÌô‰ÁÉ¥µ…ÉäˆÑåÁ”ô‰‰ÕÑÑ½¸ˆù¡½½Í”„A€ñÍÁ…¸…É¥„µ¡¥‘‘•¸ô‰ÑÉÕ”ˆûŠ\ğ½ÍÁ…¸øğ½‰ÕÑÑ½¸ø4(€€€€€€€€€€€€ñ‰ÕÑÑ½¸¥ô‰Í…µÁ±”ˆ±…ÍÌô‰Ñ•áĞµ‰ÕÑÑ½¸ˆÑåÁ”ô‰‰ÕÑÑ½¸ˆùáÁ±½É”„Í…µÁ±”‘É…İ¥¹œğ½‰ÕÑÑ½¸ø4(€€€€€€€€€€ğ½‘¥Øø4(€€€€€€€€€€ñÍµ…±°ùÉ½À„A…¹åİ¡•É”¥¸Ñ¡”İ½É­ÍÁ…”ƒ
+ÜÕÀÑ¼€ÔÀ5ƒ
+Ü¹¼…½Õ¹Ğ¹••‘•ğ½Íµ…±°ø4(€€€€€€€€ğ½‘¥Øø4(€€€€€€€€ñ‘¥Ø¥ô‰Á…Á•Èˆ±…ÍÌô‰Á…Á•Èˆ¡¥‘‘•¸øñ…¹Ù…Ì¥ô‰…¹Ù…Ìˆ…É¥„µ±…‰•°ô‰A‘É…İ¥¹œˆøğ½…¹Ù…Ìøñ‘¥Ø¥ô‰½Ù•É±…äˆ…É¥„µ±…‰•°ô‰É…İ¥¹œ…¹¹½Ñ…Ñ¥½¹Ìˆøğ½‘¥Øøğ½‘¥Øø4(€€€€€€ğ½‘¥Øø4(4(€€€€€€ñ‘¥Ø±…ÍÌô‰ÍÑ…ÑÕÍ‰…Èˆø4(€€€€€€€€ñÍÁ…¸¥ô‰ÍÑ…ÑÕÌˆÉ½±”ô‰ÍÑ…ÑÕÌˆ…É¥„µ±¥Ù”ô‰Á½±¥Ñ”ˆøñÍÁ…¸±…ÍÌô‰ÍÑ…ÑÕÌµ‘½Ğˆ…É¥„µ¡¥‘‘•¸ô‰ÑÉÕ”ˆøğ½ÍÁ…¸øI•…‘äÑ¼½Á•¸„‘É…İ¥¹œğ½ÍÁ…¸ø4(€€€€€€€€ñÍÁ…¸¥ô‰É•Ù¥•Üµ¹½Ñ”ˆùÉ…œÑ¡”‘É…İ¥¹œÑ¼Á…¸ƒ
+ÜMÉ½±°Ñ¼é½½´ğ½ÍÁ…¸ø4(€€€€€€€€ñÍÁ…¸¥ô‰µ½‘”ˆùIY%\5=ğ½ÍÁ…¸ø4(€€€€€€ğ½‘¥Øø4(€€€€ğ½Í•Ñ¥½¸ø4(4(€€€€ñ…Í¥‘”±…ÍÌô‰¥¹ÍÁ•Ñ½Èˆ…É¥„µ±…‰•°ô‰%¹ÍÁ•Ñ¥½¸É•¥ÍÑ•È…¹•áÁ½ÉÑÌˆø4(€€€€€€ñ‘¥Ø±…ÍÌô‰Á…¹•°µ¡•…‘¥¹œˆø4(€€€€€€€€ñ‘¥ØøñÍÁ…¸±…ÍÌô‰•å•‰É½Üˆù%9MAQ%=8ğ½ÍÁ…¸øñ Èù	Õ‰‰±”É•¥ÍÑ•Èğ½ Èøğ½‘¥Øø4(€€€€€€€€ñÍÁ…¸±…ÍÌô‰½Õ¹Ğˆ¥ô‰½Õ¹ĞˆøÀğ½ÍÁ…¸ø4(€€€€€€ğ½‘¥Øø4(€€€€€€ñÀ±…ÍÌô‰Á…¹•°µ¡¥¹Ğˆù…ÁÑÕÉ”„É•ÅÕ¥É•µ•¹Ğ™½È•Ù•ÉäÁ½¥¹Ğå½Ôµ…É¬¸ğ½Àø4(€€€€€€ñ‘¥Ø¥ô‰É•¥ÍÑ•Èˆ±…ÍÌô‰É•¥ÍÑ•Èˆøñ‘¥Ø±…ÍÌô‰É•¥ÍÑ•Èµ•µÁÑäˆøñÍÁ…¸±…ÍÌô‰É•¥ÍÑ•Èµ•µÁÑäµ¥½¸ˆ…É¥„µ¡¥‘‘•¸ô‰ÑÉÕ”ˆûŠ^8ğ½ÍÁ…¸øñÍÑÉ½¹œù9½Ñ¡¥¹œµ…É­•å•Ğğ½ÍÑÉ½¹œøñÍÁ…¸ù‘„‰Õ‰‰±”½¸Ñ¡”‘É…İ¥¹œÑ¼ÍÑ…ÉĞå½ÕÈÉ•¥ÍÑ•È¸ğ½ÍÁ…¸øğ½‘¥Øøğ½‘¥Øø4(4(€€€€€€ñ™½É´¥ô‰•‘¥Ñ½Èˆ±…ÍÌô‰•‘¥Ñ½Èˆ¡¥‘‘•¸ø4(€€€€€€€€ñ‘¥Ø±…ÍÌô‰•‘¥Ñ½Èµ¡•…‘¥¹œˆøñÍÑÉ½¹œ¥ô‰Í•±•Ñ•µ±…‰•°ˆù	Õ‰‰±”€Äğ½ÍÑÉ½¹œøñ‰ÕÑÑ½¸¥ô‰‘•±•Ñ”ˆÑåÁ”ô‰‰ÕÑÑ½¸ˆ±…ÍÌô‰‘…¹•Èˆù•±•Ñ”ğ½‰ÕÑÑ½¸øğ½‘¥Øø4(€€€€€€€€ñ‘¥Ø±…ÍÌô‰¹Õµ‰•ÈµÉ½Üˆû»¶‰ËkºwµçdÏØ]ÛÙ]ƒBˆYHœÛİ\˜ÙKZ[™›ÈˆÛ\ÜÏHœÛX[]]YÜƒBˆ]ÛˆYH›X\›ˆˆ\OH˜]ÛˆˆÛ\ÜÏH^X]Ûˆ”™[Y[X™\ˆ\ÈÛÜœ™Xİ[ÛØ]ÛƒBˆÛ\ÜÏHœÛX[]]YÚ[™Ù\ÈØ]™HÈ\ÈÙ\ÜÚ[Ûˆ]]ÛX]XØ[KÜƒBˆÙ›Ü›OƒBƒBˆ]ˆÛ\ÜÏHš[œÜXİÜ‹X›İÛHƒBˆÙXİ[ÛˆÛ\ÜÏH™^ÜÈˆ\šXK[X™[H‘^Ü˜]Ú[™È[™[œÜXİ[Ûˆ]HƒBˆ]ˆÛ\ÜÏHœÙXİ[Û‹[X™[Ü[ˆÛ\ÜÏH™^YXœ›İÈ‘SU‘TÜÜ[Ü[ˆ\šXKZY[HYH¸¡¥ÏÜÜ[Ù]ƒBˆYHœ™]šY]Ë\İ[[X\HYHX˜›HÈ™YÚ[‹ÜƒBˆ]ÛˆYH™^ÜˆˆÛ\ÜÏHœš[X\Hˆ]K[™YYËYØÈ\ØX›Y‘İÛ›ØYX˜›YˆÜ[ˆ\šXKZY[HYH¸¡¤ÏÜÜ[Ø]ÛƒBˆ]ˆÛ\ÜÏH™šY[È]ÛˆYH™^Ü[XYÙHˆ]K[™YYËYØÈ\ØX›Y”Ø]™H[XYÙOØ]Û]ÛˆYHœš[ˆ]K[™YYËYØÈ\ØX›Y”š[Ø]ÛÙ]ƒBˆ]ÛˆYH™^ÜÜİˆˆ\ØX›Y‘İÛ›ØY[œÜXİ[ÛˆÔÕØ]ÛƒBˆ]ÛˆYH™^Ü[ÜXÈˆ\ØX›Y‘^ÜÔPÈ^Ù[›Ü›OØ]ÛƒBˆ[œ]YH›ÜXË][\]Hˆ\OH™š[HˆXØÙ\H‹Ş\XØ][Û‹İ›™›Ü[[›Ü›X]Ë[Ù™šXÙYØİ[Y[œÜ™XYÚY][œÚY]ˆY[ƒBˆÛ\ÜÏHœÛX[]]YÚÛÜÙHH›[šÈÔPÈÛÜšØ›ÛÚËˆH›Ü›H\Èš[YÛˆ\È]šXÙH[™\È›İ\ØYYÜƒBˆYH›X\›š[™Ë\İ]\ÈˆÛ\ÜÏHœÛX[X\›š[™Ë\İ]\È“X\›š[™ÎˆÛÛ™š\›YYÛÜœ™Xİ[ÛœÈ\ÈÙ\ÜÚ[Û‹ÜƒBˆ]ˆÛ\ÜÏHœØ]™YZXY[™Èİ›Û™Ï”Ø]™Y™]šY]ÜÏÜİ›Û™Ï]ÛˆYH˜ÛX\‹\Ø]™\Èˆ\OH˜]ÛˆÛX\Ø]ÛÙ]ƒBˆ]ˆYHœØ]™Y\™]šY]ÜÈˆÛ\ÜÏHœØ]™Y\™]šY]ÜÈÜ[ˆÛ\ÜÏH›]]YÛX[“›ÈØ]™Y™]šY]ÜÈY]ÜÜ[Ù]ƒBˆÜÙXİ[ÛƒBƒBˆÙXİ[ÛˆÛ\ÜÏH˜ÛİY\[™[ˆ\šXK[X™[YOH˜ÛİY]]HƒBˆ]ˆÛ\ÜÏH˜ÛİYZXY[™ÈÜ[ˆÛ\ÜÏH˜ÛİYZXÛÛˆˆ\šXKZY[HYH¸¡©OÜÜ[]İ›Û™ÈYH˜ÛİY]]H–[İ\ˆÛİY˜]Ú[™ÜÏÜİ›Û™ÏÜ[”š]˜]HÈ[İ\ˆXØÛİ[ÜÜ[Ù]]ÛˆYHœØ]™KXÛİYˆ\OH˜]Ûˆˆ\ØX›Y”Ø]™Hİ\œ™[Ø]ÛÙ]ƒBˆYH˜ÛİYZ[ˆÛ\ÜÏHœÛX[]]Y”ÚYÛˆ[ˆÈØ]™HœÈ[™X˜›\ÈÈ[İ\ˆXØÛİ[ÜƒBˆ]ˆYH˜ÛİYY˜]Ú[™ÜÈˆÛ\ÜÏHœØ]™Y\™]šY]ÜÈÜ[ˆÛ\ÜÏH›]]YÛX[“›ÈÛİY˜]Ú[™ÜÈØYYÜÜ[Ù]ƒBˆÜÙXİ[ÛƒBˆÙ]ƒBˆØ\ÚYOƒBˆÛXZ[ƒBƒBˆ›Ûİ\Ü[X˜›H˜]Ú[™ÏÜÜ[Ü[“ØØ[›ØÙ\ÜÚ[™È0­Èˆ	˜[\ÈÔÕˆ^ÜÜÜ[Ù›Ûİ\ƒBƒBˆX[ÙÈYH˜]]YX[ÙÈ›Ü›HYH˜]]Y›Ü›H”ÚYÛˆ[ˆÈX˜›H˜]Ú[™ÏÚ”Ø]™H˜]Ú[™ÜÈš]˜][HÈ[İ\ˆİ\X˜\ÙHXØÛİ[[™™[Ü[ˆ[HÛˆ[›İ\ˆ]šXÙKÜX™[‘[XZ[[œ]YH˜]]Y[XZ[ˆ\OH™[XZ[ˆ]]ØÛÛ\]OH™[XZ[ˆ™\]Z\™YX^[™İHŒMÛX™[X™[”\ÜİÛÜ™[œ]YH˜]]\\ÜİÛÜ™ˆ\OHœ\ÜİÛÜ™ˆ]]ØÛÛ\]OH˜İ\œ™[\\ÜİÛÜ™ˆ™\]Z\™YZ[›[™İHˆˆX^[™İHŒLÛX™[YH˜]][Y\ÜØYÙHˆÛ\ÜÏHœÛX[]]Yˆ›ÛOHœİ]\ÈÜ]ˆÛ\ÜÏH™X[ÙËXXİ[ÛœÈ]ÛˆYH˜]]XÛÜÙHˆ\OH˜]ÛˆØ[˜Ù[Ø]Û]ÛˆYH˜]]\ÚYÛ\ˆ\OH˜]ÛˆÜ™X]HXØÛİ[Ø]Û]ÛˆYH˜]]\ÚYÛš[ˆˆ\OHœİX›Z]ˆÛ\ÜÏHœš[X\H”ÚYÛˆ[Ø]ÛÙ]Ù›Ü›OÙX[ÙÏƒBˆX[ÙÈYHœØØ[‹YX[ÙÈ›Ü›HY]ÙH™X[ÙÈ”ØØ[ˆ˜]Ú[™ÏÚØ\\™H[Y[œÚ[Û‹Û\˜[˜ÙH[™Ñ	˜[\ÕØ[™Y]\ËˆX˜›\È\™HXÙYX›İ™HÜˆ™[İÈ]XİY˜[Y\ÈÈÙY\H^™XYX›KˆÛÈ[YÛ™Y˜[Y\ÈX^H™HİYÙÙ\İY\ÈZ[š[][H[™X^[][NÈÛ™H˜[YH\ÈİYÙÙ\İY\È›ÛZ[˜[ˆÚXÚÈ]™\HİYÙÙ\İ[ÛˆYØZ[œİH˜]Ú[™ËÜX™[”YÙ\ÏÙ[XİYHœØØ[‹\YÙ\ÈÜ[Ûˆ˜[YOH˜[[YÙ\ÏÛÜ[ÛÜ[Ûˆ˜[YOH˜İ\œ™[İ\œ™[YÙOÛÜ[ÛÜÙ[XİÛX™[X™[Û\ÜÏH˜ÚXÚÈ[œ]YHœØØ[‹[ØÜˆˆ\OH˜ÚXÚØ›ŞˆÚXÚÙYˆ[˜ÛYHĞÔˆ›ÜˆØØ[›™YÛÛ[ÛX™[Û\ÜÏHœÛX[]]Y“ĞÔˆ[œÈÛˆ\È]šXÙH[™X^HZÙH[YKˆ˜Z[^›İ]YX™[È[™Ñ	˜[\ÕŞ[X›ÛÈØ[ˆ™HZ\ÜÙYÜˆZ\Ü™XYÜ]ˆÛ\ÜÏH™X[ÙËXXİ[ÛœÈ]Ûˆ˜[YOH˜Ø[˜Ù[Ø[˜Ù[Ø]Û]ÛˆYHœİ\\ØØ[ˆˆ\OH˜]ÛˆˆÛ\ÜÏHœš[X\H”İ\ØØ[Ø]ÛÙ]Ù›Ü›OÙX[ÙÏƒBˆ]ˆYHœØØ[‹\›ÙÜ™\ÜÈˆÛ\ÜÏHœ›ÙÜ™\ÜË]Ø\İˆY[Ü[ˆYHœØØ[‹[Y\ÜØYÙHˆ›ÛOHœİ]\È”ØØ[›š[™ø )ÜÜ[›ÙÜ™\ÜÈYHœØØ[‹[Y]\ˆˆX^HŒLˆ˜[YOHŒÜ›ÙÜ™\ÜÏ]ÛˆYH˜Ø[˜Ù[\ØØ[ˆ”İÜØØ[Ø]ÛÙ]ƒBˆX[ÙÈYHš[XYÙKYX[ÙÈ›Ü›HY]ÙH™X[ÙÈ”Ø]™H˜]Ú[™È\È[XYÙOÚX™[‘›Ü›X]Ù[XİYHš[XYÙKY›Ü›X]Ü[Ûˆ˜[YOHœ™È”‘ÏÛÜ[ÛÜ[Ûˆ˜[YOHšœYÈ’”QÏÛÜ[ÛÜÙ[XİÛX™[X™[”YÙ\ÏÙ[XİYHš[XYÙK\YÙ\ÈÜ[Ûˆ˜[YOH˜İ\œ™[İ\œ™[YÙOÛÜ[ÛÜ[Ûˆ˜[YOH˜[[YÙ\È
+’Tš[JOÛÜ[ÛÜÙ[XİÛX™[X™[”™\ÛÛ][ÛÙ[XİYHš[XYÙKYHÜ[Ûˆ˜[YOHŒMLŒMLOÛÜ[ÛÜ[Ûˆ˜[YOHŒÌŒÌOÛÜ[ÛÜÙ[XİÛX™[Û\ÜÏHœÛX[]]Y’[˜ÛY\ÈX˜›\È[™YÙH›İ][Û‹ˆ™\H\™ÙHYÙ\È\™HØ\Y]HYYØ\^[ËÜ]ˆÛ\ÜÏH™X[ÙËXXİ[ÛœÈ]Ûˆ˜[YOH˜Ø[˜Ù[Ø[˜Ù[Ø]Û]ÛˆYHœØ]™KZ[XYÙHˆ\OH˜]ÛˆˆÛ\ÜÏHœš[X\H‘İÛ›ØYØ]ÛÙ]Ù›Ü›OÙX[ÙÏƒBˆX[ÙÈYHœš[YX[ÙÈ›Ü›HY]ÙH™X[ÙÈ”š[˜]Ú[™ÏÚX™[”YÙ\ÏÙ[XİYHœš[\YÙ\ÈÜ[Ûˆ˜[YOH˜[[YÙ\ÏÛÜ[ÛÜ[Ûˆ˜[YOH˜İ\œ™[İ\œ™[YÙOÛÜ[ÛÜÙ[XİÛX™[X™[‘˜]Ú[™ÈØØ[H
+	JO[œ]YHœš[\ØØ[Hˆ\OH›[X™\ˆˆZ[HŒLˆX^HŒŒˆİ\HHˆ˜[YOHŒLÛX™[•\ÙHH›İ][Ûˆ]ÛœÈ™Y›Ü™Hš[[™ËˆØØ[HÚ[™Ù\ÈH˜]Ú[™ÈÚ^™HÛˆ]ÈÜšYÚ[˜[\\ˆÚ^™NÈX›İ™HL	HX^HÜ›ÜYÙ\ËÜÛ\ÜÏHœÛX[]]Y’[ˆHš[\ˆX[ÙËÙ[XİHX]Ú[™È\\ˆÚ^™KL	HØØ[K[™\ØX›HXY\œËÙ›Ûİ\œËÜ]ˆÛ\ÜÏH™X[ÙËXXİ[ÛœÈ]Ûˆ˜[YOH˜Ø[˜Ù[Ø[˜Ù[Ø]Û]ÛˆYHœ™\\™K\š[ˆ\OH˜]ÛˆˆÛ\ÜÏHœš[X\H“Ü[ˆš[™]šY]ÏØ]ÛÙ]Ù›Ü›OÙX[ÙÏƒBˆØÜš\Ü˜ÏH‹‹İ™[™Ü‹ÚœŞš\›Z[‹šœÈÜØÜš\ƒBˆØÜš\Ü˜ÏH‹‹İ™[™Ü‹Üİ\X˜\ÙKÜİ\X˜\ÙKšœÈÜØÜš\ƒBˆØÜš\\OH›[Ù[HˆÜ˜ÏH‹‹Ø\šœÈÜØÜš\ƒBˆ›ÜØÜš\•\ÈˆY]Üˆ™\]Z\™\È˜]˜TØÜš\ˆ[˜X›H˜]˜TØÜš\[ˆ[İ\ˆœ›İÜÙ\ˆÈÜ[ˆH˜]Ú[™ËÛ›ÜØÜš\ƒBØ›ÙOƒBÚ[ƒBƒB
